@@ -27,6 +27,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Debug wrangler.json generado
+        run: cat dist/server/wrangler.json
+
       - name: Deploy to Production
         if: github.ref == 'refs/heads/main'
         run: npx wrangler deploy --config wrangler.jsonc --env production
