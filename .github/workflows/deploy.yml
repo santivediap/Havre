@@ -32,7 +32,14 @@ jobs:
 
       - name: Deploy to Production
         if: github.ref == 'refs/heads/main'
-        run: npx wrangler deploy --config wrangler.jsonc --env production
+        run: |
+          node -e "
+            const fs = require('fs');
+            const config = JSON.parse(fs.readFileSync('dist/server/wrangler.json', 'utf8'));
+            config.kv_namespaces = [{ binding: 'SESSION', id: process.env.KV_PRODUCTION_ID }];
+            fs.writeFileSync('dist/server/wrangler.json', JSON.stringify(config));
+          "
+          npx wrangler deploy
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -40,8 +47,17 @@ jobs:
 
       - name: Deploy to Preview
         if: github.ref != 'refs/heads/main'
-        run: npx wrangler deploy --config wrangler.jsonc --env preview
+        run: |
+          node -e "
+            const fs = require('fs');
+            const config = JSON.parse(fs.readFileSync('dist/server/wrangler.json', 'utf8'));
+            config.kv_namespaces = [{ binding: 'SESSION', id: process.env.KV_PREVIEW_ID }];
+            fs.writeFileSync('dist/server/wrangler.json', JSON.stringify(config));
+          "
+          npx wrangler deploy
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           KV_PREVIEW_ID: ${{ secrets.KV_PREVIEW_ID }}
+      - name: Debug wrangler.json generado después de modificarlo
+        run: cat dist/server/wrangler.json
