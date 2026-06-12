@@ -5,17 +5,74 @@ import "../styles/global.css"
 <header>
     <div class="header-box">
         <a class="logo-link" href="/">Havre</a>
-    
+
         <nav>
             <a href="">Comprar</a>
             <a href="">Vender</a>
             <a href="">Zonas</a>
             <a href="">Sobre Havre</a>
         </nav>
-    
+
         <div class="right-header">
             <a class="header-login" href="">Acceder</a>
             <a class="cta-header" href="">Vender mi casa</a>
         </div>
     </div>
 </header>
+
+<style>
+  header {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--havre-border);
+    padding: 0 calc(var(--havre-space-5) * 4);
+    width: 100%;
+    height: 76px;
+  }
+
+  .header-box {
+    width: 100%;
+    max-width: var(--max-width);
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo-link {
+    font-family: var(--havre-font-serif);
+    color: var(--havre-ink-900);
+    font-weight: var(--havre-weight-bold);
+    font-size: var(--havre-text-h3);
+  }
+
+  nav {
+    display: flex;
+    gap: calc(var(--havre-space-6) * 3);
+
+    a {
+      font-weight: var(--havre-weight-medium);
+      color: var(--havre-ink-700);
+    }
+  }
+
+  .right-header {
+    display: flex;
+    align-items: center;
+    gap: var(--havre-space-8);
+
+    .header-login {
+      color: var(--havre-ink-700);
+      font-weight: var(--havre-weight-semibold);
+    }
+
+    .cta-header {
+      font-size: var(--havre-text-small);
+      color: var(--havre-bronze-text);
+      font-weight: var(--havre-weight-medium);
+      border: 1px solid var(--havre-bronze-default);
+      border-radius: var(--havre-radius-md);
+      padding: var(--havre-space-5) calc(var(--havre-space-5) * 2);
+    }
+  }
+</style>
