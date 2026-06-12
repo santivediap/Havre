@@ -36,6 +36,7 @@ jobs:
           node -e "
             const fs = require('fs');
             const config = JSON.parse(fs.readFileSync('dist/server/wrangler.json', 'utf8'));
+            config.name = 'havre-production';
             config.kv_namespaces = [{ binding: 'SESSION', id: process.env.KV_PRODUCTION_ID }];
             fs.writeFileSync('dist/server/wrangler.json', JSON.stringify(config));
           "
@@ -51,6 +52,7 @@ jobs:
           node -e "
             const fs = require('fs');
             const config = JSON.parse(fs.readFileSync('dist/server/wrangler.json', 'utf8'));
+            config.name = 'havre-preview';
             config.kv_namespaces = [{ binding: 'SESSION', id: process.env.KV_PREVIEW_ID }];
             fs.writeFileSync('dist/server/wrangler.json', JSON.stringify(config));
           "
