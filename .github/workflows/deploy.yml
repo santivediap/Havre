@@ -29,7 +29,7 @@ jobs:
 
       - name: Deploy to Production
         if: github.ref == 'refs/heads/main'
-        run: npx wrangler deploy --env production
+        run: npx wrangler deploy --config wrangler.jsonc --env production
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -37,7 +37,7 @@ jobs:
 
       - name: Deploy to Preview
         if: github.ref != 'refs/heads/main'
-        run: npx wrangler deploy --env preview
+        run: npx wrangler deploy --config wrangler.jsonc --env preview
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
