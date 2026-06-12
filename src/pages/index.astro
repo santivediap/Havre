@@ -113,6 +113,21 @@ const properties = [
 					)) }
 				</ul>
 			</section>
+			
+			<section class="cta-section">
+				<article class="cta-card cta-card--buyers">
+					<p class="cta-label">COMPRADORES</p>
+					<h2 class="cta-title">¿Buscas tu refugio en el campo?</h2>
+					<p class="cta-text">Te acompañamos en cada paso: desde la primera visita hasta las llaves. Dinos qué imaginas y lo encontramos.</p>
+					<a class="cta-btn cta-btn--bronze" href="">Explorar propiedades</a>
+				</article>
+				<article class="cta-card cta-card--sellers">
+					<p class="cta-label">VENDEDORES</p>
+					<h2 class="cta-title">¿Quieres vender tu propiedad rural?</h2>
+					<p class="cta-text">Valoramos tu casa de campo de forma gratuita y la presentamos al comprador adecuado, con cuidado y discreción.</p>
+					<a class="cta-btn cta-btn--light" href="">Valora tu propiedad gratis</a>
+				</article>
+			</section>
 		</main>
 	</body>
 </html>
@@ -407,5 +422,75 @@ const properties = [
 	font-size: var(--havre-text-label);
 	font-weight: var(--havre-weight-medium);
 	color: rgba(254, 250, 224, 0.82);
+}
+
+.cta-section {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 24px;
+	margin-bottom: 96px;
+}
+
+.cta-card {
+	padding: 52px 48px;
+	border-radius: var(--havre-radius-2xl);
+}
+
+.cta-card--buyers  { background-color: var(--havre-beige); }
+.cta-card--sellers { background-color: var(--havre-ink-900); }
+
+.cta-label {
+	margin: 0 0 18px;
+	font-size: var(--havre-text-label);
+	font-weight: var(--havre-weight-semibold);
+	letter-spacing: var(--havre-tracking-eyebrow);
+}
+
+.cta-card--buyers  .cta-label { color: #5E6B3A; }
+.cta-card--sellers .cta-label { color: var(--havre-bronze); }
+
+.cta-title {
+	font-family: var(--havre-font-serif);
+	font-size: var(--havre-text-h2);
+	font-weight: var(--havre-weight-semibold);
+	line-height: var(--havre-leading-heading);
+	margin: 0 0 16px;
+	max-width: 340px;
+}
+
+.cta-card--buyers  .cta-title { color: var(--havre-ink-900); }
+.cta-card--sellers .cta-title { color: var(--havre-cornsilk); }
+
+.cta-text {
+	font-size: var(--havre-text-body);
+	line-height: var(--havre-leading-body);
+	margin: 0 0 32px;
+	max-width: 370px;
+}
+
+.cta-card--buyers  .cta-text { color: var(--havre-ink-700); }
+.cta-card--sellers .cta-text { color: var(--havre-ink-300); }
+
+.cta-btn {
+	display: inline-block;
+	font-size: var(--havre-text-body);
+	font-weight: var(--havre-weight-semibold);
+	padding: 15px 30px;
+	border-radius: var(--havre-radius-md);
+	transition: all ease-in 0.15s;
+}
+
+.cta-btn:hover {
+	transform: translateY(-3px);
+}
+
+.cta-btn--bronze {
+	background-color: var(--havre-bronze-default);
+	color: var(--havre-white);
+}
+
+.cta-btn--light {
+	background-color: var(--havre-papaya);
+	color: var(--havre-ink-900);
 }
 </style>
