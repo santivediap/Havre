@@ -1,0 +1,190 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* COLOR — Brand palette */
+  --havre-sage: #CCD5AE;
+  --havre-beige: #E9EDC9;
+  --havre-cornsilk: #FEFAE0;
+  --havre-papaya: #FAEDCD;
+  --havre-bronze: #D4A373;
+
+  /* COLOR — Warm neutrals */
+  --havre-ink-900: #2E2A20;
+  --havre-ink-700: #4A4435;
+  --havre-ink-500: #776C57;
+  --havre-ink-300: #A99E86;
+  --havre-line: #E7E1CE;
+  --havre-surface: #FBF9F0;
+  --havre-white: #FFFFFF;
+
+  /* COLOR — Interaction states */
+  /* Bronze (primary) */
+  --havre-bronze-default: #D4A373;
+  --havre-bronze-hover: #C08A55;
+  --havre-bronze-active: #A9743F;
+  --havre-bronze-soft: #F3E4D2;
+  --havre-bronze-text: #8A5A2E;
+  --havre-bronze-disabled: #EFE7D5;
+  --havre-bronze-ring: rgba(212, 163, 115, 0.22);
+
+  /* Sage (secondary) */
+  --havre-sage-default: #CCD5AE;
+  --havre-sage-hover: #BAC597;
+  --havre-sage-active: #A6B381;
+  --havre-sage-soft: #EDF0E1;
+
+  /* COLOR — Semantic */
+  --havre-success: #788C57;
+  --havre-warning: #CDA24A;
+  --havre-error: #B05B43;
+  --havre-error-soft: #FCF3EF;
+  --havre-info: #7E8C9A;
+
+  /* COLOR — UI tokens */
+  --havre-border-card: #ECE5D2;
+  --havre-border-input: #E0D8C2;
+  --havre-border-soft: #E5DCC6;
+  --havre-divider: #F2ECDC;
+  --havre-chip-bg: #F4F1E3;
+  --havre-chip-border: #EAE4D1;
+  --havre-cream-border: #EFE7C9;
+
+  /* TYPOGRAPHY */
+  --havre-font-serif: 'Cormorant Garamond', Georgia, serif;
+  --havre-font-sans: 'Hanken Grotesk', system-ui, sans-serif;
+  --havre-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Weights */
+  --havre-weight-regular: 400;
+  --havre-weight-medium: 500;
+  --havre-weight-semibold: 600;
+  --havre-weight-bold: 700;
+
+  /* Size scale */
+  --havre-text-display: 72px;
+  --havre-text-h1: 54px;
+  --havre-text-h2: 40px;
+  --havre-text-h3: 28px;
+  --havre-text-subtitle: 19px;
+  --havre-text-body: 17px;
+  --havre-text-small: 14px;
+  --havre-text-label: 12px;
+
+  /* Line height */
+  --havre-leading-tight: 1.0;
+  --havre-leading-heading: 1.15;
+  --havre-leading-snug: 1.4;
+  --havre-leading-body: 1.6;
+
+  /* Letter spacing */
+  --havre-tracking-display: -0.01em;
+  --havre-tracking-label: 0.16em;
+  --havre-tracking-eyebrow: 0.22em;
+
+  /* SHADOWS */
+  --havre-shadow-xs: 0 1px 2px rgba(58, 50, 35, 0.06);
+  --havre-shadow-sm: 0 2px 6px rgba(58, 50, 35, 0.08);
+  --havre-shadow-md: 0 6px 16px rgba(58, 50, 35, 0.10);
+  --havre-shadow-lg: 0 14px 32px rgba(58, 50, 35, 0.12);
+  --havre-shadow-xl: 0 24px 56px rgba(58, 50, 35, 0.14);
+
+  /* BORDERS */
+  --havre-radius-sm: 8px;
+  --havre-radius-md: 12px;
+  --havre-radius-lg: 16px;
+  --havre-radius-xl: 20px;
+  --havre-radius-2xl: 28px;
+  --havre-radius-full: 999px;
+
+  /* SPACING */
+  --havre-space-1: 2px;
+  --havre-space-2: 4px;
+  --havre-space-3: 6px;
+  --havre-space-4: 8px;
+  --havre-space-5: 10px;
+  --havre-space-6: 12px;
+  --havre-space-7: 14px;
+  --havre-space-8: 16px;
+
+  /* SEMANTIC ALIASES */
+  --havre-bg: var(--havre-surface);
+  --havre-bg-elevated: var(--havre-white);
+  --havre-text: var(--havre-ink-900);
+  --havre-text-muted: var(--havre-ink-500);
+  --havre-text-faint: var(--havre-ink-300);
+  --havre-accent: var(--havre-bronze);
+  --havre-accent-hover: var(--havre-bronze-hover);
+  --havre-link: var(--havre-bronze-text);
+  --havre-border: var(--havre-line);
+  --havre-focus-ring: var(--havre-bronze-ring);
+}
+
+body {
+    margin: 0;
+    font-family: var(--havre-font-sans);
+    background-color: var(--havre-bg);
+}
+
+a {
+  text-decoration: none;
+}
+
+/* HEADER */
+
+header {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--havre-border);
+  padding: 0px calc(var(--havre-space-5) * 4);
+  box-sizing: border-box;
+  width: 100%;
+  height: 76px;
+}
+
+.header-box {
+  width: 100%;
+  max-width: 1096px;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo-link {
+  font-family: "Cormorant Garamond", serif;
+  color: var(--havre-ink-900);
+  font-weight: var(--havre-weight-bold);
+  font-size: var(--havre-text-h3);
+}
+
+nav {
+  display: flex;
+  gap: calc(var(--havre-space-6) * 3);
+
+  a {
+    font-weight: var(--havre-weight-medium);
+    color: var(--havre-ink-700);
+  }
+}
+
+.right-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--havre-space-8);
+
+  .header-login {
+    color: var(--havre-ink-700);
+    font-weight: var(--havre-weight-semibold);
+  }
+
+  .cta-header {
+    font-size: var(--havre-text-small);
+    color: var(--havre-bronze-text);
+    font-weight: var(--havre-weight-medium);
+    border: 1px solid var(--havre-bronze-default);
+    border-radius: var(--havre-radius-md);
+    padding: var(--havre-space-5) calc(var(--havre-space-5) * 2);
+  }
+}
