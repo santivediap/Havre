@@ -2,6 +2,14 @@
 import Header from "../components/Header.astro"
 import Search from "../components/icons/Search.astro"
 
+const regions = [
+	{ name: "Toscana",  count: "84 propiedades" },
+	{ name: "Provenza", count: "61 propiedades" },
+	{ name: "Pirineos", count: "47 propiedades" },
+	{ name: "Alentejo", count: "39 propiedades" },
+	{ name: "Empordà",  count: "52 propiedades" },
+]
+
 const properties = [
 	{ tag: "EN VENTA",   location: "TOSCANA, ITALIA",    title: "Masía entre olivares",       specs: ["4 hab.", "2 baños", "320 m²", "1.2 ha"], price: "€ 685.000"   },
 	{ tag: "NUEVO",      location: "PROVENZA, FRANCIA",  title: "Casa de piedra con viñedo",  specs: ["5 hab.", "3 baños", "410 m²"],            price: "€ 920.000"   },
@@ -94,9 +102,16 @@ const properties = [
 				<h2 class="title">EXPLORA POR ZONA</h2>
 				<h1 class="main-title">Cada región, su carácter</h1>
 
-				<div>
-
-				</div>
+				<ul class="regions-grid">
+					{ regions.map(region => (
+						<li class="region">
+							<a href="">
+								<h3 class="region-name">{region.name}</h3>
+								<p class="region-count">{region.count}</p>
+							</a>
+						</li>
+					)) }
+				</ul>
 			</section>
 		</main>
 	</body>
@@ -348,5 +363,49 @@ const properties = [
 	font-size: 13px;
 	font-weight: var(--havre-weight-semibold);
 	color: var(--havre-bronze-text);
+}
+
+.regions-grid {
+	display: grid;
+	grid-template-columns: repeat(5, 1fr);
+	gap: 18px;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.region {
+	height: 260px;
+	border-radius: var(--havre-radius-lg);
+	overflow: hidden;
+	background-image: repeating-linear-gradient(125deg, #CCD5AE 0 16px, #C3CDA1 16px 32px);
+
+	a {
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-end;
+		height: 100%;
+		padding: 18px;
+		background: linear-gradient(180deg, rgba(46, 42, 32, 0) 45%, rgba(46, 42, 32, 0.62) 100%);
+	}
+}
+
+.region:hover {
+	filter: brightness(0.97);
+}
+
+.region-name {
+	margin: 0 0 2px;
+	font-family: var(--havre-font-serif);
+	font-size: 22px;
+	font-weight: var(--havre-weight-semibold);
+	color: var(--havre-cornsilk);
+}
+
+.region-count {
+	margin: 0;
+	font-size: var(--havre-text-label);
+	font-weight: var(--havre-weight-medium);
+	color: rgba(254, 250, 224, 0.82);
 }
 </style>
