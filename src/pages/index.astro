@@ -1,6 +1,15 @@
 ---
 import Header from "../components/Header.astro"
 import Search from "../components/icons/Search.astro"
+
+const properties = [
+	{ tag: "EN VENTA",   location: "TOSCANA, ITALIA",    title: "Masía entre olivares",       specs: ["4 hab.", "2 baños", "320 m²", "1.2 ha"], price: "€ 685.000"   },
+	{ tag: "NUEVO",      location: "PROVENZA, FRANCIA",  title: "Casa de piedra con viñedo",  specs: ["5 hab.", "3 baños", "410 m²"],            price: "€ 920.000"   },
+	{ tag: "DESTACADO",  location: "PIRINEOS, ESPAÑA",   title: "Cortijo restaurado",         specs: ["3 hab.", "2 baños", "240 m²"],            price: "€ 540.000"   },
+	{ tag: "EN VENTA",   location: "ALENTEJO, PORTUGAL", title: "Quinta con naranjos",        specs: ["6 hab.", "4 baños", "520 m²", "3 ha"],    price: "€ 1.150.000" },
+	{ tag: "NUEVO",      location: "UMBRÍA, ITALIA",     title: "Casale entre colinas",       specs: ["4 hab.", "3 baños", "360 m²"],            price: "€ 795.000"   },
+	{ tag: "EN VENTA",   location: "EMPORDÀ, ESPAÑA",    title: "Casa rural de piedra",       specs: ["3 hab.", "2 baños", "280 m²", "0.8 ha"], price: "€ 620.000"   },
+]
 ---
 
 <html lang="en">
@@ -51,6 +60,44 @@ import Search from "../components/icons/Search.astro"
 
 				<p class="subhero-text">+340 fincas y casas de campo · 12 regiones · acompañamiento personal de principio a fin</p>
 			</section>
+
+			<section class="properties-section">
+				<h2 class="title">SELECCIÓN HAVRE</h2>
+				<h1 class="main-title">Propiedades destacadas</h1>
+				<a class="see-properties" href="">Ver todas las propiedades</a>
+
+				<div class="featured-properties">
+					{ properties.map((property) => (
+						<article class="property">
+							<div class="property-image">
+								<p class="property-tag">{property.tag}</p>
+							</div>
+
+							<div class="property-info">
+								<p class="property-location">{property.location}</p>
+								<h3 class="property-title">{property.title}</h3>
+								<ul class="property-specs">
+									{property.specs.map(spec => (
+										<li class="property-spec">{spec}</li>
+									))}
+								</ul>
+								<div class="property-footer">
+									<p class="property-price">{property.price}</p>
+									<a class="property-link" href="">Ver ficha</a>
+								</div>
+							</div>
+						</article>
+					)) }
+				</div>
+			</section>
+			<section class="properties-section">
+				<h2 class="title">EXPLORA POR ZONA</h2>
+				<h1 class="main-title">Cada región, su carácter</h1>
+
+				<div>
+
+				</div>
+			</section>
 		</main>
 	</body>
 </html>
@@ -63,6 +110,7 @@ import Search from "../components/icons/Search.astro"
   }
 
   .hero {
+	margin-bottom: 180px;
     position: relative;
     border-radius: var(--havre-radius-2xl);
     width: 100%;
@@ -102,6 +150,7 @@ import Search from "../components/icons/Search.astro"
     bottom: -40px;
     left: 50%;
     transform: translateX(-50%);
+	border: 1px solid #eae3d0;
     display: grid;
     grid-template-columns: 1.5fr 1fr 1fr auto;
     align-items: center;
@@ -168,4 +217,136 @@ import Search from "../components/icons/Search.astro"
     font-size: var(--havre-text-small);
     color: var(--havre-ink-500);
   }
+
+  .properties-section {
+	position: relative;
+	margin-bottom: 96px;
+}
+
+.see-properties {
+	position: absolute;
+	right: 0px;
+	top: 60px;
+	color: var(--havre-bronze-text);
+	font-weight: var(--havre-weight-semibold);
+	font-size: var(--havre-text-small);
+}
+
+.title {
+	width: 100%;
+	font-size: var(--havre-text-small);
+	margin: 0px 0px var(--havre-space-7);
+	letter-spacing: var(--havre-tracking-eyebrow);
+	color: var(--havre-bronze-text);
+}
+
+.main-title {
+	font-family: var(--havre-font-serif);
+	font-size: var(--havre-text-h1);
+	color: var(--havre-text);
+	margin: 0;
+	margin-bottom: calc(var(--havre-space-5) * 4);
+	font-weight: var(--havre-weight-semibold);
+}
+
+.featured-properties {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: calc(var(--havre-space-6) * 2);
+}
+
+.property {
+	background-color: var(--havre-white);
+	border: 1px solid var(--havre-border-card);
+	border-radius: var(--havre-radius-lg);
+	box-shadow: var(--havre-shadow-sm);
+	transition: all ease-in 0.15s;
+	overflow: hidden;
+}
+
+.property:hover {
+	transform: translateY(-3px);
+}
+
+.property-image {
+	position: relative;
+	height: 210px;
+	background-image: repeating-linear-gradient(135deg, #E9EDC9 0 14px, #E1E6BC 14px 28px);
+}
+
+.property-tag {
+	position: absolute;
+	top: 14px;
+	left: 14px;
+	margin: 0;
+	font-size: var(--havre-text-label);
+	font-weight: var(--havre-weight-semibold);
+	letter-spacing: 0.04em;
+	color: var(--havre-ink-900);
+	background-color: var(--havre-cornsilk);
+	padding: var(--havre-space-3) var(--havre-space-6);
+	border-radius: var(--havre-radius-full);
+}
+
+.property-info {
+	padding: 22px;
+}
+
+.property-location {
+	margin: 0 0 6px;
+	font-family: var(--havre-font-mono);
+	font-size: 11px;
+	letter-spacing: 0.04em;
+	color: var(--havre-ink-300);
+}
+
+.property-title {
+	margin: 0 0 14px;
+	font-family: var(--havre-font-serif);
+	font-size: 27px;
+	font-weight: var(--havre-weight-semibold);
+	line-height: 1.08;
+	color: var(--havre-ink-900);
+}
+
+.property-specs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	list-style: none;
+	margin: 0 0 18px;
+	padding: 0;
+}
+
+.property-spec {
+	font-size: var(--havre-text-label);
+	font-weight: var(--havre-weight-medium);
+	color: var(--havre-ink-700);
+	background-color: var(--havre-chip-bg);
+	border: 1px solid var(--havre-chip-border);
+	padding: 5px 11px;
+	border-radius: var(--havre-radius-sm);
+}
+
+.property-footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding-top: 16px;
+	border-top: 1px solid var(--havre-divider);
+}
+
+.property-price {
+	margin: 0;
+	font-family: var(--havre-font-serif);
+	font-size: 25px;
+	font-weight: var(--havre-weight-semibold);
+	color: var(--havre-bronze-text);
+}
+
+.property-link {
+	font-size: 13px;
+	font-weight: var(--havre-weight-semibold);
+	color: var(--havre-bronze-text);
+}
 </style>
