@@ -33,7 +33,9 @@ jobs:
         with:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          command: deploy --env production
+          command: deploy
+        env:
+          CLOUDFLARE_ENV: production
 
       - name: Deploy to Preview
         if: github.ref != 'refs/heads/main'
@@ -41,4 +43,6 @@ jobs:
         with:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          command: deploy --env preview
+          command: deploy
+        env:
+          CLOUDFLARE_ENV: preview
