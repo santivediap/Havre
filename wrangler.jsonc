@@ -1,6 +1,8 @@
 {
-	"compatibility_date": "2026-06-11",
-	"compatibility_flags": ["global_fetch_strictly_public"],
+	"compatibility_date": "2026-06-12",
+	"compatibility_flags": [
+		"global_fetch_strictly_public"
+	],
 	"name": "havre",
 	"main": "@astrojs/cloudflare/entrypoints/server",
 	"assets": {
@@ -9,5 +11,25 @@
 	},
 	"observability": {
 		"enabled": true
+	},
+	"env": {
+		"preview": {
+			"name": "havre-preview",
+			"kv_namespaces": [
+				{
+					"binding": "SESSION",
+					"id": "$KV_PREVIEW_ID"
+				}
+			]
+		},
+		"production": {
+			"name": "havre-production",
+			"kv_namespaces": [
+				{
+					"binding": "SESSION",
+					"id": "$KV_PRODUCTION_ID"
+				}
+			]
+		}
 	}
 }
