@@ -1,5 +1,6 @@
 ---
 import Header from "../components/Header.astro"
+import Search from "../components/icons/Search.astro"
 ---
 
 <html lang="en">
@@ -13,6 +14,43 @@ import Header from "../components/Header.astro"
 	</head>
 	<body>
 		<Header />
-		<h1>Astro working in Cloudflare? Finally?</h1>
+		
+		<main>
+			<section class="hero">
+				<div class="hero-text-contents">
+					<p class="hero-text">CASAS DE CAMPO · FINCAS · REFUGIOS</p>
+					<h1 class="hero-title">Encuentra tu refugio entre campos dorados.</h1>
+				</div>
+
+				<form class="hero-search-form" action="">
+					<div class="input">
+						<label for="zone">ZONA</label>
+						<input type="text" name="zone" id="zone" placeholder="Toscana, Provenza, Pirineos...">
+					</div>
+					<div style="border-left: 1px solid #efe9d7" class="input">
+						<label for="type">TIPO</label>
+						<select name="type" id="type">
+							<option value="all">Cualquiera</option>
+							<option value="country-house">Casa de campo</option>
+							<option value="farmhouse">Masía / Cortijo</option>
+							<option value="property">Finca con terreno</option>
+						</select>
+					</div>
+					<div style="border-left: 1px solid #efe9d7" class="input">
+						<label for="price-max">PRECIO MÁX.</label>
+						<select name="price-max" id="price-max">
+							<option value="">Sin límite</option>
+							<option value="">€ 500.000</option>
+							<option value="">€ 750.000</option>
+							<option value="">€ 1.000.000</option>
+						</select>
+					</div>
+
+					<button type="submit"><Search/> Buscar</button>
+				</form>
+
+				<p class="subhero-text">+340 fincas y casas de campo · 12 regiones · acompañamiento personal de principio a fin</p>
+			</section>
+		</main>
 	</body>
 </html>
