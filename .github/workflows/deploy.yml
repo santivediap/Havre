@@ -27,9 +27,6 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Debug wrangler.json generado
-        run: cat dist/server/wrangler.json
-
       - name: Deploy to Production
         if: github.ref == 'refs/heads/main'
         run: |
@@ -61,5 +58,3 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           KV_PREVIEW_ID: ${{ secrets.KV_PREVIEW_ID }}
-      - name: Debug wrangler.json generado después de modificarlo
-        run: cat dist/server/wrangler.json
