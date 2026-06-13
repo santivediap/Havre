@@ -1,0 +1,188 @@
+---
+import Header from "../components/Header.astro"
+import Footer from "../components/Footer.astro"
+import Location from "../components/icons/Location.astro"
+import Lifeline from "../components/icons/Lifeline.astro"
+import Heart from "../components/icons/Heart.astro"
+import ArrowRight from "../components/icons/ArrowRight.astro"
+import "../styles/global.css"
+
+const companyMetrics = [
+    { value: "2019", label: "Año en que empezamos" },
+    { value: "+340", label: "Propiedades acompañadas" },
+    { value: "3",    label: "Países: España, Italia, Portugal" },
+    { value: "96%",  label: "Clientes que nos recomiendan" },
+]
+
+const companyInfo = [
+    { icon: Location, title: "Solo lo rural",  description: "No vendemos pisos en la ciudad. Cada miembro del equipo conoce a fondo el campo, su valor y su comprador." },
+    { icon: Lifeline, title: "Honestidad",      description: "Valoraciones realistas y conversaciones francas. Preferimos perder una venta antes que forzarla." },
+    { icon: Heart,    title: "Sin prisa",       description: "Esperamos al comprador adecuado. Una casa con alma encuentra a su gente; nuestro trabajo es darle tiempo." },
+]
+
+const team = [
+    { name: "Lucía Marenco",  role: "Fundadora",  zone: "Toscana",   bio: "Restauró su primera masía a los 26. No vende una casa que no compraría." },
+    { name: "Tomás Ferrer",   role: "Asesor",      zone: "Pirineos",  bio: "Excursionista y agrónomo. Conoce cada valle por su nombre." },
+    { name: "Inès Costa",     role: "Asesora",     zone: "Alentejo",  bio: "Especialista en quintas y fincas con terreno y agua." },
+    { name: "Marc Dubois",    role: "Asesor",      zone: "Provenza",  bio: "Veinte años entre bastides y campos de lavanda." },
+]
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <Header/>
+
+    <main>
+        <section class="hero">
+            <h1 class="hero-main-title">SOBRE HAVRE</h2>
+            <h2 class="hero-title">
+                Un <span>havre</span> es un refugio. Ayudamos a encontrar el tuyo en el campo.
+            </h1>
+
+            <p>Nacimos de una idea sencilla: las casas rurales no se venden como los pisos. Tienen historia, tierra y silencio.
+                 Merecen contarse con calma y entregarse a quien de verdad sabrá cuidarlas.</p>
+            
+            <div class="team-img"></div>
+        </section>
+
+        <section class="our-history">
+            <h1>NUESTRA HISTORIA</h1>
+            <aside>
+                <h2>Empezó con una casa de piedra que nadie sabía vender</h2>
+                <p>En 2019, buscando una masía abandonada entre olivos, nos topamos con el mismo problema una y otra vez: los grandes portales trataban una casa con doscientos años de historia igual que un estudio en la ciudad. Fotos frías, descripciones de plantilla, y agentes que nunca habían pisado el camino de tierra.</p>
+                <p>Pensamos que lo rural merecía otra cosa. Una inmobiliaria que conociera la diferencia entre un olivar en producción y uno abandonado, que supiera por qué importa la orientación del porche, y que tuviera la paciencia de esperar al comprador correcto en lugar del primero.</p>
+                <p>Hoy somos un equipo pequeño repartido por tres países, pero la idea sigue intacta: <span>menos casas, mejor contadas</span>.</p>
+            </aside>
+        </section>
+
+        <section class="company-info">
+            <h1>Lo que nos guía</h1>
+
+            <div class="cards">
+                { companyInfo.map(item => (
+                    <article>
+                        <item.icon />
+                        <h2>{item.title}</h2>
+                        <p>{item.description}</p>
+                    </article>
+                )) }
+            </div>
+
+            <article class="company-metrics">
+                { companyMetrics.map(metric => (
+                    <div>
+                        <h2>{metric.value}</h2>
+                        <p>{metric.label}</p>
+                    </div>
+                )) }
+            </article>
+        </section>
+
+        <section class="team">
+            <h1>EL EQUIPO</h1>
+            <h2>Gente que conoce el camino de tierra</h2>
+            { team.map(member => (
+                <article class="partner">
+                    <div class="image"></div>
+                    <h3>{member.name}</h3>
+                    <h4>{member.role} · {member.zone}</h4>
+                    <p>{member.bio}</p>
+                </article>
+            )) }
+        </section>
+
+        <article class="slogan">
+            <p>“No vendemos propiedades. Acompañamos a las personas hasta el lugar donde querrán quedarse.”</p>
+            <h1>LA PROMESA HAVRE</h1>
+        </article>
+
+        <section class="cta-nav">
+            <a href="">
+                <h2>Explorar propiedades</h2>
+                <p>Más de 340 casas de campo, fincas y refugios esperándote</p>
+                <span>Ver el catálogo <ArrowRight/></span>
+            </a>
+
+            <a href="">
+                <h2>Vender con nosotros</h2>
+                <p>Valoración gratuita y acompañamiento de principio a fin</p>
+                <span>Empezar <ArrowRight/></span>
+            </a>
+        </section>
+    </main>
+
+    <Footer/>
+</body>
+</html>
+
+<style>
+    main {
+        max-width: calc(var(--max-width) + 80px);
+        padding: 0px calc(var(--havre-space-5) * 4);
+        margin: 0 auto;
+  }
+
+    .hero {
+        padding: 80px 0;
+    }
+
+    .hero-main-title {
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        letter-spacing: var(--havre-tracking-eyebrow);
+        color: var(--havre-link);
+        margin: 0 0 28px;
+    }
+
+    .hero-title {
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-display);
+        font-weight: var(--havre-weight-bold);
+        line-height: var(--havre-leading-heading);
+        color: var(--havre-ink-900);
+        margin: 0 0 32px;
+        max-width: 980px;
+
+        span {
+            color: var(--havre-link);
+            font-style: italic;
+        }
+    }
+
+    .hero > p {
+        font-size: 21px;
+        color: var(--havre-ink-700);
+        line-height: var(--havre-leading-body);
+        max-width: 680px;
+        margin: 0 0 56px;
+    }
+
+    .team-img {
+        width: 100%;
+        height: 440px;
+        background:
+            linear-gradient(rgba(46, 42, 32, 0) 0%, rgba(46, 42, 32, 0) 60%, rgba(46, 42, 32, .8) 100%),
+            linear-gradient(rgba(110, 122, 78, 0) 0%, rgba(101, 114, 70, .2) 30%, rgba(101, 114, 70, 1) 100%),
+            url(/public/assets/team-bg.png) center / cover no-repeat;
+        border-radius: var(--havre-radius-2xl);
+        position: relative;
+        overflow: hidden;
+        
+        &::after {
+            content: "El equipo en una masía de la Toscana, 2024";
+            position: absolute;
+            bottom: 24px;
+            left: 28px;
+            font-family: var(--havre-font-sans);
+            font-size: var(--havre-text-label);
+            color: rgba(255, 255, 255, 0.55);
+        }
+    }
+</style>
