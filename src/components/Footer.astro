@@ -1,0 +1,182 @@
+---
+import "../styles/global.css"
+import ArrowRight from "./icons/ArrowRight.astro"
+---
+
+<footer>
+    <div class="footer-inner">
+        <div class="footer-grid">
+
+            <div class="footer-brand">
+                <a class="footer-logo" href="/">Havre</a>
+                <p class="footer-tagline">Casas de campo, fincas y refugios con alma. Un lugar al que volver.</p>
+            </div>
+
+            <div>
+                <p class="footer-links-title">EXPLORAR</p>
+                <ul class="footer-links">
+                    <li><a href="">Casas de campo</a></li>
+                    <li><a href="">Fincas con terreno</a></li>
+                    <li><a href="">Masías y cortijos</a></li>
+                    <li><a href="">Todas las zonas</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <p class="footer-links-title">HAVRE</p>
+                <ul class="footer-links">
+                    <li><a href="">Sobre nosotros</a></li>
+                    <li><a href="">Nuestro método</a></li>
+                    <li><a href="">Vender con Havre</a></li>
+                    <li><a href="">Contacto</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-newsletter">
+                <p class="footer-links-title">RECIBE NUEVAS PROPIEDADES</p>
+                <form class="newsletter-form" action="">
+                    <input class="newsletter-input" type="email" placeholder="Tu correo" />
+                    <button class="newsletter-btn" type="submit"><ArrowRight /></button>
+                </form>
+                <p class="newsletter-hint">Sin spam. Solo casas que merecen una visita.</p>
+            </div>
+
+        </div>
+
+        <div class="footer-bottom">
+            <p class="footer-copyright">© 2026 Havre</p>
+            <div class="footer-legal">
+                <a href="">Aviso legal</a>
+                <a href="">Privacidad</a>
+                <a href="">Cookies</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<style>
+    footer {
+        background-color: var(--havre-cornsilk);
+        border-top: 1px solid var(--havre-cream-border);
+        padding: 72px 0 40px;
+    }
+
+    .footer-inner {
+        max-width: calc(var(--max-width) + 80px);
+        padding: 0 calc(var(--havre-space-5) * 4);
+        margin: 0 auto;
+    }
+
+    .footer-grid {
+        display: grid;
+        grid-template-columns: 1.6fr 1fr 1fr 1.4fr;
+        gap: 40px;
+        padding-bottom: 56px;
+        border-bottom: 1px solid var(--havre-line);
+    }
+
+    .footer-logo {
+        font-family: var(--havre-font-serif);
+        font-size: 26px;
+        font-weight: var(--havre-weight-bold);
+        color: var(--havre-ink-900);
+        display: inline-block;
+        margin-bottom: 16px;
+    }
+
+    .footer-tagline {
+        font-size: var(--havre-text-small);
+        line-height: var(--havre-leading-body);
+        color: var(--havre-ink-500);
+        margin: 0;
+        max-width: 280px;
+    }
+
+    .footer-links-title {
+        font-size: var(--havre-text-label);
+        font-weight: var(--havre-weight-semibold);
+        letter-spacing: var(--havre-tracking-eyebrow);
+        color: var(--havre-ink-300);
+        margin: 0 0 18px;
+    }
+
+    .footer-links {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        a {
+            font-size: 15px;
+            color: var(--havre-ink-700);
+        }
+    }
+
+    .newsletter-form {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    .newsletter-input {
+        flex: 1;
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-small);
+        color: var(--havre-ink-900);
+        background-color: var(--havre-white);
+        border: 1.5px solid var(--havre-border-input);
+        border-radius: var(--havre-radius-md);
+        padding: 12px 14px;
+        outline: none;
+        transition: border-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .newsletter-input:focus {
+        border-color: var(--havre-bronze);
+        box-shadow: 0 0 0 3px var(--havre-bronze-ring);
+    }
+
+    .newsletter-btn {
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-body);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-white);
+        background-color: var(--havre-bronze-default);
+        border: none;
+        padding: 0 20px;
+        border-radius: var(--havre-radius-md);
+        cursor: pointer;
+    }
+
+    .newsletter-hint {
+        font-size: var(--havre-text-label);
+        color: var(--havre-ink-300);
+        margin: 0;
+    }
+
+    .footer-bottom {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 28px;
+    }
+
+    .footer-copyright {
+        font-family: var(--havre-font-mono);
+        font-size: var(--havre-text-label);
+        color: var(--havre-ink-300);
+        margin: 0;
+    }
+
+    .footer-legal {
+        display: flex;
+        gap: 28px;
+
+        a {
+            font-size: 13px;
+            color: var(--havre-ink-500);
+        }
+    }
+</style>
