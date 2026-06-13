@@ -443,4 +443,68 @@ const reasons = [
 
         &:hover { background-color: var(--havre-bronze-hover); }
     }
+
+    @media (max-width: 964px) {
+        main { padding: 0 20px; }
+
+        /* Hero: apilado, formulario debajo del texto */
+        .hero {
+            grid-template-columns: 1fr;
+            gap: 40px;
+            padding: 52px 0 64px;
+        }
+
+        .hero-content h1 { font-size: var(--havre-text-h1); }
+
+        .hero-desc { max-width: none; }
+
+        /* Steps: 2 columnas */
+        .steps { grid-template-columns: repeat(2, 1fr); }
+
+        .process { padding: 64px 0; }
+
+        /* Why Havre: columnas apiladas */
+        .why-havre { padding: 52px 40px; }
+
+        .reasons { grid-template-columns: 1fr; }
+
+        .reason {
+            padding: 28px 0;
+            border-right: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+            &:first-child { padding-top: 0; }
+            &:last-child  { border-bottom: none; padding-bottom: 0; }
+        }
+
+        /* CTA */
+        .cta { padding: 56px 32px; margin-bottom: 56px; }
+        .cta h2 { font-size: var(--havre-text-h2); }
+        .cta p  { max-width: none; }
+    }
+
+    @media (max-width: 480px) {
+        main { padding: 0 16px; }
+
+        .hero { padding: 40px 0 52px; gap: 32px; }
+
+        .hero-content h1 { font-size: var(--havre-text-h2); }
+
+        .hero-stats { gap: 28px; }
+
+        /* Formulario: campos en columna única */
+        .field-row { grid-template-columns: 1fr; }
+
+        .valuation-card { padding: 28px 24px; }
+
+        /* Steps: 1 columna */
+        .steps { grid-template-columns: 1fr; }
+
+        .process { padding: 48px 0; }
+
+        .why-havre { padding: 40px 24px; margin-bottom: 48px; }
+
+        .cta { padding: 44px 20px; margin-bottom: 40px; }
+        .cta h2 { font-size: var(--havre-text-h3); }
+    }
 </style>
