@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css"
+const { pathname } = Astro.url
 ---
 
 <header>
@@ -10,7 +11,7 @@ import "../styles/global.css"
             <a href="">Comprar</a>
             <a href="">Vender</a>
             <a href="">Zonas</a>
-            <a href="about-us">Sobre Havre</a>
+            <a href="about-us" class={pathname === "/about-us" ? "nav-active" : ""}>Sobre Havre</a>
         </nav>
 
         <div class="right-header">
@@ -53,6 +54,11 @@ import "../styles/global.css"
     a {
       font-weight: var(--havre-weight-medium);
       color: var(--havre-ink-700);
+    }
+
+    a.nav-active {
+      color: var(--havre-bronze-text);
+      font-weight: var(--havre-weight-semibold);
     }
   }
 

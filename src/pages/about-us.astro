@@ -105,13 +105,13 @@ const team = [
         <section class="cta-nav">
             <a href="">
                 <h2>Explorar propiedades</h2>
-                <p>Más de 340 casas de campo, fincas y refugios esperándote</p>
+                <p>Más de 340 casas de campo, fincas y refugios esperándote.</p>
                 <span>Ver el catálogo <ArrowRight/></span>
             </a>
 
             <a href="">
                 <h2>Vender con nosotros</h2>
-                <p>Valoración gratuita y acompañamiento de principio a fin</p>
+                <p>Valoración gratuita y acompañamiento de principio a fin.</p>
                 <span>Empezar <ArrowRight/></span>
             </a>
         </section>
@@ -367,5 +367,82 @@ const team = [
         color: var(--havre-ink-700);
         line-height: var(--havre-leading-body);
         margin: 0;
+    }
+
+    .slogan {
+        background-color: var(--havre-beige);
+        border-radius: var(--havre-radius-2xl);
+        padding: 80px 80px;
+        text-align: center;
+        margin: 0 0 70px;
+    }
+
+    .slogan > p {
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-h2);
+        font-style: italic;
+        font-weight: var(--havre-weight-regular);
+        color: var(--havre-ink-900);
+        line-height: var(--havre-leading-snug);
+        margin: 0 0 28px;
+        max-width: 780px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .slogan > h1 {
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        letter-spacing: var(--havre-tracking-eyebrow);
+        color: var(--havre-ink-500);
+        margin: 0;
+    }
+
+    .cta-nav {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+        padding: 24px 0 100px;
+    }
+
+    .cta-nav > a {
+        display: flex;
+        flex-direction: column;
+        background-color: var(--havre-white);
+        border: 1px solid var(--havre-border-card);
+        border-radius: var(--havre-radius-xl);
+        padding: 40px 40px 36px;
+        transition: all ease-in .15s;
+
+        h2 {
+            font-family: var(--havre-font-serif);
+            font-size: calc(var(--havre-text-h2) * .85);
+            font-weight: var(--havre-weight-regular);
+            color: var(--havre-ink-900);
+            margin: 0 0 12px;
+        }
+
+        p {
+            font-size: var(--havre-text-body);
+            color: var(--havre-ink-500);
+            line-height: var(--havre-leading-body);
+            margin: 0 0 28px;
+        }
+
+        span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: var(--havre-text-small);
+            font-weight: var(--havre-weight-semibold);
+            color: var(--havre-bronze-text);
+            margin-top: auto;
+        }
+    }
+
+    .cta-nav > a:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--havre-shadow-xl);
     }
 </style>
