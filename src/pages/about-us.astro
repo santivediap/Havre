@@ -77,8 +77,8 @@ const team = [
             <article class="company-metrics">
                 { companyMetrics.map(metric => (
                     <div>
-                        <h2>{metric.value}</h2>
-                        <p>{metric.label}</p>
+                        <p>{metric.value}</p>
+                        <h2>{metric.label}</h2>
                     </div>
                 )) }
             </article>
@@ -199,6 +199,92 @@ const team = [
         span {
             font-weight: var(--havre-weight-semibold);
             color: var(--havre-link);
+        }
+    }
+
+    .company-info {
+        padding: 80px 0;
+        border-top: 1px solid var(--havre-line);
+    }
+
+    .company-info > h1 {
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-h2);
+        font-weight: var(--havre-weight-bold);
+        color: var(--havre-ink-900);
+        margin: 0 0 40px;
+    }
+
+    .cards {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin-bottom: 40px;
+    }
+
+    .cards article {
+        background-color: var(--havre-white);
+        border: 1px solid var(--havre-border-card);
+        border-radius: var(--havre-radius-xl);
+        padding: 32px;
+        box-shadow: var(--havre-shadow-xs);
+
+        h2 {
+            font-family: var(--havre-font-serif);
+            font-size: var(--havre-text-h3);
+            font-weight: var(--havre-weight-semibold);
+            color: var(--havre-ink-900);
+            margin: 24px 0 12px;
+        }
+
+        p {
+            font-size: var(--havre-text-body);
+            color: var(--havre-text-muted);
+            line-height: var(--havre-leading-body);
+            margin: 0;
+        }
+
+        svg {
+            display: block;
+            padding: 10px;
+            background-color: var(--havre-papaya);
+            color: var(--havre-bronze-text);
+            border-radius: var(--havre-radius-md);
+            width: 48px;
+            height: 48px;
+        }
+    }
+
+    .company-metrics {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0;
+        background-color: var(--havre-ink-900);
+        border-radius: var(--havre-radius-2xl);
+        padding: 52px 56px;
+
+        div {
+            padding: 0 40px;
+
+            &:first-child { padding-left: 0; }
+            &:last-child  { border-right: none; }
+        }
+
+        p {
+            font-family: var(--havre-font-serif);
+            font-size: var(--havre-text-h1);
+            font-weight: var(--havre-weight-regular);
+            color: var(--havre-cornsilk);
+            margin: 0 0 15px;
+            line-height: 1;
+        }
+
+        h2 {
+            font-size: var(--havre-text-small);
+            color: var(--havre-ink-300);
+            font-weight: var(--havre-weight-semibold);
+            margin: 0;
+            line-height: var(--havre-leading-snug);
         }
     }
 
