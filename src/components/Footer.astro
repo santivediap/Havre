@@ -179,4 +179,25 @@ import ArrowRight from "./icons/ArrowRight.astro"
             color: var(--havre-ink-500);
         }
     }
+
+  @media (max-width: 789px) {
+    .footer-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+    }
+
+    .footer-tagline { max-width: none; }
+  }
+
+  @media (max-width: 480px) {
+    footer { padding: 48px 0 32px; }
+
+    .footer-grid { grid-template-columns: 1fr; }
+
+    .footer-bottom {
+      flex-direction: column;
+      gap: 16px;
+      align-items: flex-start;
+    }
+  }
 </style>
