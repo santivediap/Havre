@@ -2,6 +2,7 @@
 import Header from "../components/Header.astro"
 import Search from "../components/icons/Search.astro"
 import Footer from "../components/Footer.astro"
+import ArrowRight from "../components/icons/ArrowRight.astro"
 
 const regions = [
 	{ name: "Toscana",  count: "84 propiedades" },
@@ -102,6 +103,7 @@ const properties = [
 			<section class="properties-section">
 				<h2 class="title">EXPLORA POR ZONA</h2>
 				<h1 class="main-title">Cada región, su carácter</h1>
+				<a class="explore-zones-link" href="/zonas">Explorar todas las zonas <ArrowRight/></a>
 
 				<ul class="regions-grid">
 					{ regions.map(region => (
@@ -277,9 +279,19 @@ const properties = [
 	font-family: var(--havre-font-serif);
 	font-size: var(--havre-text-h1);
 	color: var(--havre-text);
-	margin: 0;
-	margin-bottom: calc(var(--havre-space-5) * 4);
+	margin: 0 0 16px;
 	font-weight: var(--havre-weight-semibold);
+}
+
+.explore-zones-link {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: var(--havre-text-small);
+	font-weight: var(--havre-weight-semibold);
+	color: var(--havre-bronze-text);
+	margin-top: calc(var(--havre-space-5) * 2);
+	margin-bottom: calc(var(--havre-space-5) * 3);
 }
 
 .featured-properties {
