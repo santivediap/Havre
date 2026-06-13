@@ -1,0 +1,446 @@
+---
+import Header from "../components/Header.astro"
+import Footer from "../components/Footer.astro"
+import "../styles/global.css"
+
+const steps = [
+    { number: "1", title: "Valoración",      description: "Estudiamos tu propiedad y su entorno para darte una estimación realista de mercado." },
+    { number: "2", title: "Preparación",     description: "Fotografía, descripción y dossier que cuentan la historia de tu casa con cuidado." },
+    { number: "3", title: "Presentación",    description: "La mostramos solo a compradores cualificados que buscan exactamente lo que ofreces." },
+    { number: "4", title: "Acompañamiento",  description: "Te guiamos en visitas, negociación y firma, hasta entregar las llaves." },
+]
+
+const reasons = [
+    { title: "Solo campo",       description: "No vendemos pisos en la ciudad. Conocemos al detalle el comprador de masías, fincas y casas rurales." },
+    { title: "Con discreción",   description: "Presentamos tu propiedad con tacto, sin saturar portales ni exponerla más de lo necesario." },
+    { title: "Red cualificada",  description: "Una base de compradores que buscan refugio rural en concreto, no curiosos de paso." },
+]
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vender con Havre — Tu propiedad rural, bien presentada</title>
+    <meta name="description" content="Valoramos tu propiedad rural de forma gratuita y la presentamos a compradores cualificados. Sin compromiso, respuesta en 24 h.">
+</head>
+<body>
+    <Header/>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <p class="eyebrow">VENDER CON HAVRE</p>
+                <h1>Tu casa de campo merece el comprador adecuado.</h1>
+                <p class="hero-desc">Valoramos tu propiedad rural de forma gratuita y la presentamos, con cuidado y discreción, a quien de verdad sabrá apreciarla.</p>
+
+                <ul class="hero-stats">
+                    <li>
+                        <p>24 h</p>
+                        <span>Primera estimación</span>
+                    </li>
+                    <li>
+                        <p>12</p>
+                        <span>Regiones rurales</span>
+                    </li>
+                    <li>
+                        <p>0 €</p>
+                        <span>Coste de valoración</span>
+                    </li>
+                </ul>
+            </div>
+
+            <aside id="valorar" class="valuation-card" aria-label="Formulario de valoración gratuita">
+                <h2>Valoración gratuita</h2>
+                <p class="card-subtitle">Sin compromiso · respuesta en 24 h</p>
+
+                <form action="" method="post" novalidate>
+                    <div class="field field--full">
+                        <label for="address">Dirección de la propiedad</label>
+                        <input id="address" type="text" name="address" placeholder="Localidad, región" autocomplete="street-address" required>
+                    </div>
+
+                    <div class="field-row">
+                        <div class="field">
+                            <label for="type">Tipo</label>
+                            <select id="type" name="type">
+                                <option value="country-house">Casa de campo</option>
+                                <option value="farmhouse">Masía / Cortijo</option>
+                                <option value="property">Finca con terreno</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="surface">Superficie (m²)</label>
+                            <input id="surface" type="number" name="surface" placeholder="320" min="1">
+                        </div>
+                    </div>
+
+                    <div class="field-row">
+                        <div class="field">
+                            <label for="name">Tu nombre</label>
+                            <input id="name" type="text" name="name" placeholder="Nombre" autocomplete="name" required>
+                        </div>
+                        <div class="field">
+                            <label for="email">Correo</label>
+                            <input id="email" type="text" name="email" placeholder="Para contactarte" autocomplete="email" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-btn">Solicitar valoración gratuita</button>
+                </form>
+
+                <p class="form-legal">Al enviar aceptas que un asesor de Havre te contacte. Sin compromiso.</p>
+            </aside>
+        </section>
+
+        <section class="process">
+            <p class="eyebrow">NUESTRO MÉTODO</p>
+            <h2>Vender, paso a paso</h2>
+
+            <ol class="steps">
+                { steps.map(step => (
+                    <li class="step">
+                        <span class="step-number">{step.number}</span>
+                        <h3>{step.title}</h3>
+                        <p>{step.description}</p>
+                    </li>
+                )) }
+            </ol>
+        </section>
+
+        <section class="why-havre">
+            <p class="eyebrow">POR QUÉ HAVRE</p>
+            <h2>Especialistas en lo rural, no en todo.</h2>
+
+            <ul class="reasons">
+                { reasons.map(reason => (
+                    <li class="reason">
+                        <h3>{reason.title}</h3>
+                        <p>{reason.description}</p>
+                    </li>
+                )) }
+            </ul>
+        </section>
+
+        <section class="cta" aria-labelledby="cta-heading">
+            <h2 id="cta-heading">¿Empezamos por la valoración?</h2>
+            <p>Gratis y sin compromiso. En 24 horas tendrás una primera estimación del valor de tu propiedad.</p>
+            <a class="cta-btn" href="#address">Valorar mi propiedad gratis</a>
+        </section>
+
+    </main>
+
+    <Footer/>
+</body>
+</html>
+
+<style>
+    main {
+        max-width: calc(var(--max-width) + 80px);
+        padding: 0 calc(var(--havre-space-5) * 4);
+        margin: 0 auto;
+    }
+
+    .eyebrow {
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        letter-spacing: var(--havre-tracking-eyebrow);
+        color: var(--havre-link);
+        margin: 0 0 20px;
+    }
+
+    .hero {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 64px;
+        align-items: center;
+        padding: 80px 0 96px;
+    }
+
+    .hero-content h1 {
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-display);
+        font-weight: var(--havre-weight-semibold);
+        line-height: var(--havre-leading-heading);
+        color: var(--havre-ink-900);
+        margin: 0 0 28px;
+    }
+
+    .hero-desc {
+        font-size: var(--havre-text-subtitle);
+        color: var(--havre-ink-700);
+        line-height: var(--havre-leading-body);
+        max-width: 460px;
+        margin: 0 0 40px;
+    }
+
+    .hero-stats {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        gap: 48px;
+
+        li p {
+            font-family: var(--havre-font-serif);
+            font-size: var(--havre-text-h2);
+            font-weight: var(--havre-weight-semibold);
+            color: var(--havre-link);
+            margin: 0 0 4px;
+        }
+
+        li span {
+            font-size: var(--havre-text-small);
+            color: var(--havre-ink-500);
+        }
+    }
+
+    .valuation-card {
+        background: var(--havre-white);
+        border: 1px solid var(--havre-border-card);
+        border-radius: var(--havre-radius-2xl);
+        padding: 40px;
+        box-shadow: var(--havre-shadow-lg);
+    }
+
+    .valuation-card h2 {
+        font-family: var(--havre-font-serif);
+        font-size: calc(var(--havre-text-h2) * .9);
+        font-weight: var(--havre-weight-bold);
+        color: var(--havre-ink-900);
+        margin: 0 0 6px;
+    }
+
+    .card-subtitle {
+        font-size: var(--havre-text-body);
+        color: var(--havre-ink-500);
+        margin: 0 0 28px;
+    }
+
+    form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        flex: 1;
+
+        label {
+            font-size: var(--havre-text-small);
+            font-weight: var(--havre-weight-semibold);
+            color: var(--havre-ink-700);
+        }
+    }
+
+    .field-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .field input,
+    .field select {
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-body);
+        color: var(--havre-ink-900);
+        background: var(--havre-white);
+        border: 1.5px solid var(--havre-border-input);
+        border-radius: var(--havre-radius-md);
+        padding: 12px 14px;
+        outline: none;
+        width: 100%;
+        appearance: none;
+        transition: border-color 0.16s ease, box-shadow 0.16s ease;
+
+        &::placeholder { color: var(--havre-ink-300); }
+        &:focus {
+            border-color: var(--havre-bronze);
+            box-shadow: 0 0 0 3px var(--havre-bronze-ring);
+        }
+    }
+
+    .submit-btn {
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-body);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-white);
+        background-color: var(--havre-bronze-default);
+        border: none;
+        border-radius: var(--havre-radius-md);
+        padding: 16px;
+        width: 100%;
+        cursor: pointer;
+        transition: background-color 0.16s ease;
+
+        &:hover { background-color: var(--havre-bronze-hover); }
+    }
+
+    .form-legal {
+        font-size: var(--havre-text-label);
+        color: var(--havre-ink-300);
+        text-align: center;
+        margin: 15px 0 0;
+    }
+
+    .process {
+        padding: 90px 0;
+        border-top: 1px solid var(--havre-line);
+    }
+
+    .process h2 {
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-h1);
+        font-weight: var(--havre-weight-bold);
+        color: var(--havre-ink-900);
+        margin: 0 0 48px;
+    }
+
+    .steps {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .step {
+        background: var(--havre-white);
+        border: 1px solid var(--havre-border-card);
+        border-radius: var(--havre-radius-xl);
+        padding: 28px;
+
+        h3 {
+            font-family: var(--havre-font-serif);
+            font-size: var(--havre-text-h3);
+            font-weight: var(--havre-weight-semibold);
+            color: var(--havre-ink-900);
+            margin: 20px 0 12px;
+        }
+
+        p {
+            font-size: var(--havre-text-body);
+            color: var(--havre-ink-700);
+            line-height: var(--havre-leading-body);
+            margin: 0;
+        }
+    }
+
+    .step-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        padding-bottom: 5px;
+        background-color: var(--havre-papaya);
+        color: var(--havre-ink-700);
+        font-size: var(--havre-text-h3);
+        font-family: var(--havre-font-serif);
+        font-weight: var(--havre-weight-medium);
+        border-radius: var(--havre-radius-sm);
+    }
+
+    .why-havre {
+        background-color: var(--havre-ink-900);
+        border-radius: var(--havre-radius-2xl);
+        padding: 72px 64px;
+        margin-bottom: 80px;
+    }
+
+    .why-havre .eyebrow {
+        color: var(--havre-bronze);
+    }
+
+    .why-havre h2 {
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-h1);
+        font-weight: var(--havre-weight-regular);
+        color: var(--havre-cornsilk);
+        margin: 0 0 52px;
+        max-width: 560px;
+        line-height: var(--havre-leading-snug);
+    }
+
+    .reasons {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .reason {
+        padding: 0 48px;
+        border-right: 1px solid rgba(255, 255, 255, 0.12);
+
+        &:first-child { padding-left: 0; }
+        &:last-child  { border-right: none; }
+
+        h3 {
+            font-family: var(--havre-font-serif);
+            font-size: var(--havre-text-h3);
+            font-weight: var(--havre-weight-semibold);
+            color: var(--havre-cornsilk);
+            margin: 0 0 12px;
+        }
+
+        p {
+            font-size: var(--havre-text-body);
+            color: var(--havre-ink-300);
+            line-height: var(--havre-leading-body);
+            margin: 0;
+        }
+    }
+
+    .cta {
+        background-color: var(--havre-beige);
+        border-radius: var(--havre-radius-2xl);
+        padding: 80px 40px;
+        margin-bottom: 80px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .cta h2 {
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-h1);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-900);
+        margin: 0;
+        line-height: var(--havre-leading-heading);
+    }
+
+    .cta p {
+        font-size: var(--havre-text-subtitle);
+        color: var(--havre-ink-700);
+        line-height: var(--havre-leading-body);
+        max-width: 460px;
+        margin: 0;
+    }
+
+    .cta-btn {
+        display: inline-block;
+        margin-top: 8px;
+        background-color: var(--havre-bronze-default);
+        color: var(--havre-white);
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-body);
+        font-weight: var(--havre-weight-semibold);
+        border-radius: var(--havre-radius-lg);
+        padding: 16px 32px;
+        transition: background-color 0.16s ease;
+
+        &:hover { background-color: var(--havre-bronze-hover); }
+    }
+</style>

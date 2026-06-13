@@ -9,14 +9,17 @@ const { pathname } = Astro.url
 
         <nav>
             <a href="">Comprar</a>
-            <a href="">Vender</a>
+            <a href="vender" class={pathname === "/vender" ? "nav-active" : ""}>Vender</a>
             <a href="">Zonas</a>
             <a href="about-us" class={pathname === "/about-us" ? "nav-active" : ""}>Sobre Havre</a>
         </nav>
 
         <div class="right-header">
             <a class="header-login" href="">Acceder</a>
-            <a class="cta-header" href="">Vender mi casa</a>
+            <a class={`cta-header${pathname === "/vender" ? " cta-header--active" : ""}`}
+               href={pathname === "/vender" ? "/vender#valorar" : "/vender"}>
+                {pathname === "/vender" ? "Valorar mi casa" : "Vender mi casa"}
+            </a>
         </div>
     </div>
 </header>
@@ -79,6 +82,14 @@ const { pathname } = Astro.url
       border: 1px solid var(--havre-bronze-default);
       border-radius: var(--havre-radius-md);
       padding: var(--havre-space-5) calc(var(--havre-space-5) * 2);
+      transition: background-color 0.16s ease, color 0.16s ease;
+    }
+
+    .cta-header--active {
+      background-color: var(--havre-bronze-default);
+      color: var(--havre-white);
+      font-weight: var(--havre-weight-semibold);
+      border-color: var(--havre-bronze-default);
     }
   }
 
