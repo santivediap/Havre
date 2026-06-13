@@ -1,0 +1,391 @@
+---
+import Header from "../components/Header.astro"
+import Footer from "../components/Footer.astro"
+import "../styles/global.css"
+import ArrowRight from "../components/icons/ArrowRight.astro"
+
+const stats = [
+    { value: "6",    label: "Regiones rurales" },
+    { value: "+340", label: "Propiedades activas" },
+    { value: "3",    label: "Países" },
+    { value: "24 h", label: "Respuesta media" },
+]
+
+const zones = [
+    {
+        country:     "Italia",
+        name:        "Toscana",
+        slug:        "toscana",
+        count:       84,
+        description: "Colinas de olivos y cipreses, masías de piedra y luz dorada al atardecer. El refugio rural por excelencia.",
+        tags:        ["Olivares", "Masías", "Viñedos"],
+        priceFrom:   "420.000",
+    },
+    {
+        country:     "Francia",
+        name:        "Provenza",
+        slug:        "provenza",
+        count:       61,
+        description: "Campos de lavanda, bastides de postigos azules y mercados de pueblo. Calma mediterránea tierra adentro.",
+        tags:        ["Lavanda", "Bastides", "Mercados"],
+        priceFrom:   "380.000",
+    },
+    {
+        country:     "España",
+        name:        "Pirineos",
+        slug:        "pirineos",
+        count:       47,
+        description: "Valles silenciosos, bosques de haya y caseríos de piedra con vistas que no se olvidan. Lo rural en estado puro.",
+        tags:        ["Montaña", "Valles", "Bosques"],
+        priceFrom:   "310.000",
+    },
+    {
+        country:     "Portugal",
+        name:        "Alentejo",
+        slug:        "alentejo",
+        count:       39,
+        description: "Llanuras infinitas de alcornoques, quintas con naranjos y una luz que alarga las tardes. Portugal en su esencia.",
+        tags:        ["Corchos", "Quintas", "Naranjos"],
+        priceFrom:   "290.000",
+    },
+    {
+        country:     "Italia",
+        name:        "Umbría",
+        slug:        "umbria",
+        count:       34,
+        description: "El corazón verde de Italia: colinas suaves, casali de piedra y pueblos medievales a lo lejos.",
+        tags:        ["Casali", "Colinas", "Lavanda"],
+        priceFrom:   "410.000",
+    },
+    {
+        country:     "España",
+        name:        "Empordà",
+        slug:        "emporda",
+        count:       52,
+        description: "Viñedos frente al mar, masías entre olivos y la tramontana que lo mantiene todo en su sitio. Costa e interior a la vez.",
+        tags:        ["Viñedos", "Costa", "Masías"],
+        priceFrom:   "350.000",
+    },
+]
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zonas rurales — Toscana, Provenza, Pirineos y más | Havre</title>
+    <meta name="description" content="Explora las regiones rurales donde Havre opera: Toscana, Provenza, Pirineos, Alentejo y Empordà. Más de 340 propiedades en 3 países.">
+</head>
+<body>
+    <Header/>
+
+    <main>
+        <section class="hero">
+            <div class="hero-text">
+                <p class="eyebrow">EXPLORA POR ZONA</p>
+                <h1>Cada región tiene su propio carácter.</h1>
+                <p class="hero-desc">Del olivar toscano a los valles del Pirineo. Elige dónde imaginas tu refugio y descubre las casas que te esperan allí.</p>
+            </div>
+
+            <ul class="hero-stats" role="list">
+                { stats.map(stat => (
+                    <li>
+                        <p>{stat.value}</p>
+                        <span>{stat.label}</span>
+                    </li>
+                )) }
+            </ul>
+        </section>
+
+        <section class="zones" aria-label="Zonas rurales disponibles">
+            <ul class="zones-grid" role="list">
+                { zones.map(zone => (
+                    <li>
+                        <article class="zone-card">
+                            <div class="zone-image">
+                                <p class="zone-country">{zone.country}</p>
+                                <footer class="zone-image-footer">
+                                    <h2 class="zone-name">{zone.name}</h2>
+                                    <span class="zone-count">{zone.count} propiedades</span>
+                                </footer>
+                            </div>
+
+                            <div class="zone-body">
+                                <p class="zone-desc">{zone.description}</p>
+
+                                <ul class="zone-tags" role="list">
+                                    { zone.tags.map(tag => (
+                                        <li class="zone-tag">{tag}</li>
+                                    )) }
+                                </ul>
+
+                                <div class="zone-footer">
+                                    <p class="zone-price">Desde <span>€ {zone.priceFrom}</span></p>
+                                    <a class="zone-link" href={`/zonas/${zone.slug}`}>Ver propiedades <ArrowRight/></a>
+                                </div>
+                            </div>
+                        </article>
+                    </li>
+                )) }
+            </ul>
+        </section>
+
+        <aside class="no-zone" aria-label="Solicitar aviso de nuevas zonas">
+            <div class="no-zone-text">
+                <h2>¿No encuentras tu zona?</h2>
+                <p>Trabajamos en nuevas regiones cada temporada. Dinos dónde sueñas con tu refugio y te avisamos en cuanto haya algo.</p>
+            </div>
+            <a class="no-zone-btn" href="/contacto">Avisarme de nuevas zonas</a>
+        </aside>
+
+    </main>
+
+    <Footer/>
+</body>
+</html>
+
+<style>
+    main {
+        max-width: calc(var(--max-width) + 80px);
+        padding: 0 calc(var(--havre-space-5) * 4);
+        margin: 0 auto;
+    }
+
+    .hero {
+        padding: 72px 0 0;
+    }
+
+    .eyebrow {
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        letter-spacing: var(--havre-tracking-eyebrow);
+        color: var(--havre-link);
+        margin: 0 0 20px;
+    }
+
+    .hero-text h1 {
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-display);
+        font-weight: var(--havre-weight-semibold);
+        line-height: var(--havre-leading-heading);
+        color: var(--havre-ink-900);
+        margin: 0 0 20px;
+        max-width: 680px;
+    }
+
+    .hero-desc {
+        font-size: var(--havre-text-subtitle);
+        color: var(--havre-ink-700);
+        line-height: var(--havre-leading-body);
+        max-width: 600px;
+        margin: 0;
+    }
+
+    .hero-stats {
+        list-style: none;
+        padding: 32px 0 32px;
+        margin: 48px 0 0;
+        border-top: 1px solid var(--havre-line);
+        border-bottom: 1px solid var(--havre-line);
+        display: flex;
+        gap: 64px;
+
+        li p {
+            font-family: var(--havre-font-serif);
+            font-size: var(--havre-text-h2);
+            font-weight: var(--havre-weight-regular);
+            color: var(--havre-link);
+            margin: 0 0 4px;
+        }
+
+        li span {
+            font-size: var(--havre-text-small);
+            color: var(--havre-ink-500);
+        }
+    }
+
+    .zones {
+        padding: 56px 0 0;
+    }
+
+    .zones-grid {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+    }
+
+    .zone-card {
+        border: 1px solid var(--havre-border-card);
+        border-radius: var(--havre-radius-xl);
+        overflow: hidden;
+        background: var(--havre-white);
+        box-shadow: var(--havre-shadow-sm);
+        transition: all ease-in .12s;
+    }
+
+    .zone-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .zone-image {
+        height: 250px;
+        background: linear-gradient(
+                rgba(46, 42, 32, 0) 0%,
+                rgba(46, 42, 32, 0) 40%,
+                rgba(46, 42, 32, 0.65) 100%
+            ),
+            var(--havre-sage-active);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 20px 20px;
+    }
+
+    .zone-country {
+        align-self: flex-start;
+        background: rgba(46, 42, 32, 0.45);
+        color: var(--havre-white);
+        font-size: var(--havre-text-label);
+        font-weight: var(--havre-weight-medium);
+        letter-spacing: var(--havre-tracking-label);
+        text-transform: uppercase;
+        border-radius: var(--havre-radius-full);
+        padding: 4px 12px;
+        margin: 0;
+    }
+
+    .zone-image-footer {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        border: none;
+        padding: 0;
+    }
+
+    .zone-name {
+        font-family: var(--havre-font-serif);
+        font-size: calc(var(--havre-text-h1) * .85);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-cornsilk);
+        margin: 0;
+        line-height: 1;
+    }
+
+    .zone-count {
+        font-size: var(--havre-text-small);
+        color: var(--havre-cornsilk);
+        font-weight: var(--havre-weight-semibold);
+        white-space: nowrap;
+    }
+
+    .zone-body {
+        padding: 24px 24px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .zone-desc {
+        font-size: var(--havre-text-body);
+        color: var(--havre-ink-700);
+        line-height: var(--havre-leading-body);
+        margin: 0;
+    }
+
+    .zone-tags {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .zone-tag {
+        font-size: var(--havre-text-label);
+        color: var(--havre-ink-700);
+        background: var(--havre-chip-bg);
+        border: 1px solid var(--havre-chip-border);
+        border-radius: var(--havre-radius-full);
+        padding: 4px 12px;
+    }
+
+    .zone-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-top: 1px solid var(--havre-divider);
+        padding-top: 16px;
+        margin-top: 4px;
+    }
+
+    .zone-price {
+        font-size: var(--havre-text-small);
+        color: var(--havre-text-muted);
+        margin: 0;
+
+        span {
+            font-family: var(--havre-font-serif);
+            font-weight: var(--havre-weight-semibold);
+            font-size: var(--havre-text-subtitle);
+            color: var(--havre-link);
+        }
+    }
+
+    .zone-link {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-bronze-text);
+    }
+
+    .no-zone {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 48px;
+        background: var(--havre-ink-900);
+        border-radius: var(--havre-radius-2xl);
+        padding: 52px 60px;
+        margin: 80px 0 80px;
+    }
+
+    .no-zone h2 {
+        font-family: var(--havre-font-serif);
+        font-size: calc(var(--havre-text-h2) * 1.05);
+        font-weight: var(--havre-weight-bold);
+        color: var(--havre-cornsilk);
+        margin: 0 0 12px;
+    }
+
+    .no-zone p {
+        font-size: var(--havre-text-subtitle);
+        color: var(--havre-ink-300);
+        line-height: var(--havre-leading-body);
+        margin: 0;
+        max-width: 550px;
+    }
+
+    .no-zone-btn {
+        flex-shrink: 0;
+        display: inline-block;
+        background: var(--havre-cornsilk);
+        color: var(--havre-ink-900);
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-body);
+        font-weight: var(--havre-weight-semibold);
+        border-radius: var(--havre-radius-lg);
+        padding: 16px 28px;
+        transition: all ease-in 0.12s;
+
+        &:hover { transform: translateY(-3px); }
+    }
+</style>
