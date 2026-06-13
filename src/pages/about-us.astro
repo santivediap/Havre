@@ -309,4 +309,63 @@ const team = [
             color: rgba(255, 255, 255, 0.55);
         }
     }
+
+    .team {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        column-gap: 24px;
+        padding: 80px 0;
+        border-top: 1px solid var(--havre-line);
+    }
+
+    .team > h1 {
+        grid-column: 1 / -1;
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        letter-spacing: var(--havre-tracking-eyebrow);
+        color: var(--havre-link);
+        margin: 0 0 16px;
+    }
+
+    .team > h2 {
+        grid-column: 1 / -1;
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-h1);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-900);
+        margin: 0 0 40px;
+        line-height: var(--havre-leading-heading);
+    }
+
+    .partner .image {
+        width: 100%;
+        aspect-ratio: 3.5 / 5;
+        background-color: var(--havre-sage-default);
+        border-radius: var(--havre-radius-xl);
+        margin-bottom: 20px;
+    }
+
+    .partner h3 {
+        font-family: var(--havre-font-serif);
+        font-size: calc(var(--havre-text-h3) * .9);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-900);
+        margin: 0 0 4px;
+    }
+
+    .partner h4 {
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-medium);
+        color: var(--havre-bronze-text);
+        margin: 0 0 12px;
+    }
+
+    .partner p {
+        font-size: var(--havre-text-small);
+        color: var(--havre-ink-700);
+        line-height: var(--havre-leading-body);
+        margin: 0;
+    }
 </style>
