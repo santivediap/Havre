@@ -21,10 +21,10 @@ const companyInfo = [
 ]
 
 const team = [
-    { name: "Lucía Marenco",  role: "Fundadora",  zone: "Toscana",   bio: "Restauró su primera masía a los 26. No vende una casa que no compraría." },
-    { name: "Tomás Ferrer",   role: "Asesor",      zone: "Pirineos",  bio: "Excursionista y agrónomo. Conoce cada valle por su nombre." },
-    { name: "Inès Costa",     role: "Asesora",     zone: "Alentejo",  bio: "Especialista en quintas y fincas con terreno y agua." },
-    { name: "Marc Dubois",    role: "Asesor",      zone: "Provenza",  bio: "Veinte años entre bastides y campos de lavanda." },
+    { name: "Lucía Marenco",  role: "Fundadora", img: "https://res.cloudinary.com/dqoqfb8vu/image/upload/v1781379533/lucia_marenco_zrhahs.png",  zone: "Toscana",   bio: "Restauró su primera masía a los 26. No vende una casa que no compraría." },
+    { name: "Tomás Ferrer",   role: "Asesor", img: "https://res.cloudinary.com/dqoqfb8vu/image/upload/v1781379532/tomas_ferrer_nujx2y.png", zone: "Pirineos",  bio: "Excursionista y agrónomo. Conoce cada valle por su nombre." },
+    { name: "Inès Costa",     role: "Asesora", img: "https://res.cloudinary.com/dqoqfb8vu/image/upload/v1781379533/ines_costa_mvttlh.png", zone: "Alentejo",  bio: "Especialista en quintas y fincas con terreno y agua." },
+    { name: "Marc Dubois",    role: "Asesor", img: "https://res.cloudinary.com/dqoqfb8vu/image/upload/v1781379533/marc_dubois_qawcok.png", zone: "Provenza",  bio: "Veinte años entre bastides y campos de lavanda." },
 ]
 ---
 
@@ -89,7 +89,7 @@ const team = [
             <h2>Gente que conoce el camino de tierra</h2>
             { team.map(member => (
                 <article class="partner">
-                    <div class="image"></div>
+                    <div class="image" style={`--img: url(${member.img})`}></div>
                     <h3>{member.name}</h3>
                     <h4>{member.role} · {member.zone}</h4>
                     <p>{member.bio}</p>
@@ -294,7 +294,7 @@ const team = [
         background:
             linear-gradient(rgba(46, 42, 32, 0) 0%, rgba(46, 42, 32, 0) 60%, rgba(46, 42, 32, .8) 100%),
             linear-gradient(rgba(110, 122, 78, 0) 0%, rgba(101, 114, 70, .2) 30%, rgba(101, 114, 70, 1) 100%),
-            url(/public/assets/team-bg.png) center / cover no-repeat;
+            url(https://res.cloudinary.com/dqoqfb8vu/image/upload/v1781375621/team-bg_tlcfku.webp) center / cover no-repeat;
         border-radius: var(--havre-radius-2xl);
         position: relative;
         overflow: hidden;
@@ -341,7 +341,10 @@ const team = [
     .partner .image {
         width: 100%;
         aspect-ratio: 3.5 / 5;
-        background-color: var(--havre-sage-default);
+        background:
+            linear-gradient(rgba(46, 42, 32, 0) 0%, rgba(46, 42, 32, 0) 55%, rgba(46, 42, 32, .55) 100%),
+            linear-gradient(rgba(110, 122, 78, 0) 0%, rgba(101, 114, 70, .15) 40%, rgba(101, 114, 70, .6) 100%),
+            var(--img) center / cover no-repeat;
         border-radius: var(--havre-radius-xl);
         margin-bottom: 20px;
     }
