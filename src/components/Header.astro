@@ -8,7 +8,7 @@ const { pathname } = Astro.url
         <a class="logo-link" href="/">Havre</a>
 
         <nav>
-            <a href="">Comprar</a>
+            <a href="comprar" class={pathname === "/comprar" ? "nav-active" : ""}>Comprar</a>
             <a href="vender" class={pathname === "/vender" ? "nav-active" : ""}>Vender</a>
             <a href="zonas" class={pathname === "/zonas" ? "nav-active" : ""}>Zonas</a>
             <a href="about-us" class={pathname === "/about-us" ? "nav-active" : ""}>Sobre Havre</a>
@@ -26,9 +26,14 @@ const { pathname } = Astro.url
 
 <style>
   header {
+    position: sticky;
+    top: 0px;
     display: flex;
     align-items: center;
     border-bottom: 1px solid var(--havre-border);
+    background-color: rgba(251, 249, 240, 0.9);
+    z-index: 100;
+    backdrop-filter: blur(12px);
     padding: 0 calc(var(--havre-space-5) * 4);
     width: 100%;
     height: 76px;
