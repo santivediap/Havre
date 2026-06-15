@@ -6,6 +6,8 @@ import {
     text,
     boolean,
     integer,
+    numeric,
+    jsonb,
     serial,
     timestamp,
     index,
@@ -15,7 +17,9 @@ import { sql } from 'drizzle-orm';
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
-export const userRoleEnum = pgEnum('user_role', ['admin', 'agent']);
+export const userRoleEnum       = pgEnum('user_role',       ['admin', 'agent']);
+export const propertyTagEnum    = pgEnum('property_tag',    ['for_sale', 'new', 'reserved', 'sold']);
+export const propertyStatusEnum = pgEnum('property_status', ['draft', 'published', 'archived']);
 
 // ─── Tables ───────────────────────────────────────────────────────────────────
 
@@ -35,6 +39,40 @@ export const zones = pgTable('zones', {
     tags:          text('tags').array(),
     display_order: integer('display_order').notNull().default(0),
     is_active:     boolean('is_active').notNull().default(true),
+});
+
+export const properties = pgTable('properties', {
+    id:            uuid('id').defaultRandom().primaryKey(),
+    zone_id:       integer('zone_id').notNull().references(() => zones.id),
+    agent_id:      uuid('agent_id').notNull().references(() => users.id),
+    title:         varchar('title', { length: 200 }).notNull(),
+    slug:          varchar('slug',  { length: 200 }).notNull().unique(),
+    reference:     varchar('reference', { length: 20 }).notNull().unique(),
+    tag:           propertyTagEnum('tag').notNull().default('for_sale'),
+    status:        propertyStatusEnum('status').notNull().default('draft'),
+    price:         integer('price').notNull(),
+    n_beds:        integer('n_beds').notNull(),
+    n_baths:       integer('n_baths').notNull(),
+    m_built:       integer('m_built').notNull(),
+    terrain_space: numeric('terrain_space', { precision: 10, scale: 2 }),
+    description:   text('description'),
+    features:      text('features').array(),
+    latitude:      numeric('latitude',  { precision: 10, scale: 7 }),
+    longitude:     numeric('longitude', { precision: 10, scale: 7 }),
+    distances:     jsonb('distances'),
+    is_featured:   boolean('is_featured').notNull().default(false),
+    published_at:  timestamp('published_at', { withTimezone: true }),
+    created_at:    timestamp('created_at',   { withTimezone: true }).notNull().defaultNow(),
+    updated_at:    timestamp('updated_at',   { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const propertyImages = pgTable('property_images', {
+    id:            serial('id').primaryKey(),
+    property_id:   uuid('property_id').notNull().references(() => properties.id, { onDelete: 'cascade' }),
+    url:           text('url').notNull(),
+    caption:       varchar('caption', { length: 200 }),
+    display_order: integer('display_order').notNull().default(0),
+    is_cover:      boolean('is_cover').notNull().default(false),
 });
 
 export const users = pgTable('users', {
