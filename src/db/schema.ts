@@ -25,6 +25,18 @@ export const countries = pgTable('countries', {
     slug: varchar('slug', { length: 100 }).notNull().unique(),
 });
 
+export const zones = pgTable('zones', {
+    id:            serial('id').primaryKey(),
+    country_id:    integer('country_id').notNull().references(() => countries.id),
+    name:          varchar('name', { length: 100 }).notNull(),
+    slug:          varchar('slug', { length: 100 }).notNull().unique(),
+    image_url:     text('image_url'),
+    description:   text('description'),
+    tags:          text('tags').array(),
+    display_order: integer('display_order').notNull().default(0),
+    is_active:     boolean('is_active').notNull().default(true),
+});
+
 export const users = pgTable('users', {
     id:            uuid('id').defaultRandom().primaryKey(),
     name:          varchar('name', { length: 100 }).notNull(),
