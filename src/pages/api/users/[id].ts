@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { db, users } from '../../../db';
-import { json, emailRegex, publicUserColumns } from './_shared';
+import { json, emailRegex, publicUserColumns } from '../../../lib/api';
 
 export const GET: APIRoute = async ({ params }) => {
     const { id } = params;

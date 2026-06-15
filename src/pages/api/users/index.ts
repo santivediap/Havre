@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { db, users } from '../../../db';
 import bcrypt from 'bcryptjs';
-import { json, emailRegex, publicUserColumns } from './_shared';
+import { json, emailRegex, publicUserColumns } from '../../../lib/api';
 
 export const GET: APIRoute = async () => {
     try {

@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { db, countries } from '../../../db';
-import { json, slugify } from './_shared';
+import { json, slugify } from '../../../lib/api';
 
 export const GET: APIRoute = async () => {
     try {
