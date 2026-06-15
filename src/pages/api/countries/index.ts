@@ -1,14 +1,10 @@
 import type { APIRoute } from 'astro';
-import { db, countries } from '../../../db';
 import { json, slugify } from '../../../lib/api';
+import { getCountries, createCountry } from '../../../services/countries';
 
 export const GET: APIRoute = async () => {
     try {
-        const list = await db
-            .select()
-            .from(countries)
-            .orderBy(countries.name);
-
+        const list = await getCountries();
         return json({ countries: list }, 200);
     } catch (err) {
         console.error(err);
@@ -31,13 +27,10 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     try {
-        const [country] = await db
-            .insert(countries)
-            .values({
-                name: String(name),
-                slug: slug ? slugify(String(slug)) : slugify(String(name)),
-            })
-            .returning();
+        const country = await createCountry({
+            name: String(name),
+            slug: slug ? slugify(String(slug)) : slugify(String(name)),
+        });
 
         return json({ country }, 201);
     } catch (err: any) {

@@ -1,7 +1,6 @@
 import type { APIRoute } from 'astro';
-import { eq } from 'drizzle-orm';
-import { db, countries } from '../../../db';
 import { json, slugify } from '../../../lib/api';
+import { getCountryById, updateCountry, deleteCountry } from '../../../services/countries';
 
 export const GET: APIRoute = async ({ params }) => {
     const id = Number(params.id);
@@ -10,10 +9,7 @@ export const GET: APIRoute = async ({ params }) => {
     }
 
     try {
-        const [country] = await db
-            .select()
-            .from(countries)
-            .where(eq(countries.id, id));
+        const country = await getCountryById(id);
 
         if (!country) {
             return json({ error: 'Country not found' }, 404);
@@ -50,11 +46,7 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     }
 
     try {
-        const [country] = await db
-            .update(countries)
-            .set(values)
-            .where(eq(countries.id, id))
-            .returning();
+        const country = await updateCountry(id, values);
 
         if (!country) {
             return json({ error: 'Country not found' }, 404);
@@ -77,10 +69,7 @@ export const DELETE: APIRoute = async ({ params }) => {
     }
 
     try {
-        const [country] = await db
-            .delete(countries)
-            .where(eq(countries.id, id))
-            .returning({ id: countries.id });
+        const country = await deleteCountry(id);
 
         if (!country) {
             return json({ error: 'Country not found' }, 404);

@@ -1,7 +1,6 @@
 import type { APIRoute } from 'astro';
-import { eq } from 'drizzle-orm';
-import { db, zones } from '../../../db';
 import { json, slugify } from '../../../lib/api';
+import { getZoneById, updateZone, deleteZone } from '../../../services/zones';
 
 export const GET: APIRoute = async ({ params }) => {
     const id = Number(params.id);
@@ -10,10 +9,7 @@ export const GET: APIRoute = async ({ params }) => {
     }
 
     try {
-        const [zone] = await db
-            .select()
-            .from(zones)
-            .where(eq(zones.id, id));
+        const zone = await getZoneById(id);
 
         if (!zone) {
             return json({ error: 'Zone not found' }, 404);
@@ -60,11 +56,7 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     }
 
     try {
-        const [zone] = await db
-            .update(zones)
-            .set(values)
-            .where(eq(zones.id, id))
-            .returning();
+        const zone = await updateZone(id, values);
 
         if (!zone) {
             return json({ error: 'Zone not found' }, 404);
@@ -90,10 +82,7 @@ export const DELETE: APIRoute = async ({ params }) => {
     }
 
     try {
-        const [zone] = await db
-            .delete(zones)
-            .where(eq(zones.id, id))
-            .returning({ id: zones.id });
+        const zone = await deleteZone(id);
 
         if (!zone) {
             return json({ error: 'Zone not found' }, 404);

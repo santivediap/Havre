@@ -1,17 +1,13 @@
 import type { APIRoute } from 'astro';
-import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
-import { db, users } from '../../../db';
-import { json, emailRegex, publicUserColumns } from '../../../lib/api';
+import { json, emailRegex } from '../../../lib/api';
+import { getUserById, updateUser, deleteUser } from '../../../services/users';
 
 export const GET: APIRoute = async ({ params }) => {
     const { id } = params;
 
     try {
-        const [user] = await db
-            .select(publicUserColumns)
-            .from(users)
-            .where(eq(users.id, id!));
+        const user = await getUserById(id!);
 
         if (!user) {
             return json({ error: 'User not found' }, 404);
@@ -23,7 +19,7 @@ export const GET: APIRoute = async ({ params }) => {
             return json({ error: 'Invalid ID' }, 400);
         }
         console.error(err);
-        return json({ error: 'Internal Server Error' }, 500);
+        return json({ error: 'Internal server error' }, 500);
     }
 };
 
@@ -59,11 +55,7 @@ export const PATCH: APIRoute = async ({ params, request }) => {
     }
 
     try {
-        const [user] = await db
-            .update(users)
-            .set(values)
-            .where(eq(users.id, id!))
-            .returning(publicUserColumns);
+        const user = await updateUser(id!, values);
 
         if (!user) {
             return json({ error: 'User not found' }, 404);
@@ -78,7 +70,7 @@ export const PATCH: APIRoute = async ({ params, request }) => {
             return json({ error: 'Invalid ID' }, 400);
         }
         console.error(err);
-        return json({ error: 'Internal Server Error' }, 500);
+        return json({ error: 'Internal server error' }, 500);
     }
 };
 
@@ -86,10 +78,7 @@ export const DELETE: APIRoute = async ({ params }) => {
     const { id } = params;
 
     try {
-        const [user] = await db
-            .delete(users)
-            .where(eq(users.id, id!))
-            .returning({ id: users.id });
+        const user = await deleteUser(id!);
 
         if (!user) {
             return json({ error: 'User not found' }, 404);
@@ -101,6 +90,6 @@ export const DELETE: APIRoute = async ({ params }) => {
             return json({ error: 'Invalid ID' }, 400);
         }
         console.error(err);
-        return json({ error: 'Internal Server Error' }, 500);
+        return json({ error: 'Internal server error' }, 500);
     }
 };

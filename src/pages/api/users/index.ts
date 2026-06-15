@@ -1,15 +1,11 @@
 import type { APIRoute } from 'astro';
-import { db, users } from '../../../db';
 import bcrypt from 'bcryptjs';
-import { json, emailRegex, publicUserColumns } from '../../../lib/api';
+import { json, emailRegex } from '../../../lib/api';
+import { getUsers, createUser } from '../../../services/users';
 
 export const GET: APIRoute = async () => {
     try {
-        const list = await db
-            .select(publicUserColumns)
-            .from(users)
-            .orderBy(users.created_at);
-
+        const list = await getUsers();
         return json({ users: list }, 200);
     } catch (err) {
         console.error(err);
@@ -35,27 +31,15 @@ export const POST: APIRoute = async ({ request }) => {
         return json({ error: 'Invalid email format' }, 400);
     }
 
-    const hashed = await bcrypt.hash(String(password), 12);
-
     try {
-        const [user] = await db
-            .insert(users)
-            .values({
-                name:     String(name),
-                email:    String(email),
-                password: hashed,
-                role:       role === 'admin' ? 'admin' : 'agent',
-                phone:      phone      ? String(phone)      : null,
-                avatar_url: avatar_url ? String(avatar_url) : null,
-            })
-            .returning({
-                id:         users.id,
-                name:       users.name,
-                email:      users.email,
-                role:       users.role,
-                avatar_url: users.avatar_url,
-                created_at: users.created_at,
-            });
+        const user = await createUser({
+            name:       String(name),
+            email:      String(email),
+            password:   await bcrypt.hash(String(password), 12),
+            role:       role === 'admin' ? 'admin' : 'agent',
+            phone:      phone      ? String(phone)      : null,
+            avatar_url: avatar_url ? String(avatar_url) : null,
+        });
 
         return json({ user }, 201);
     } catch (err: any) {
