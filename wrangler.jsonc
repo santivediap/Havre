@@ -1,7 +1,8 @@
 {
 	"compatibility_date": "2026-06-12",
 	"compatibility_flags": [
-		"global_fetch_strictly_public"
+		"global_fetch_strictly_public",
+		"nodejs_compat"
 	],
 	"name": "havre",
 	"main": "@astrojs/cloudflare/entrypoints/server",
