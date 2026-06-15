@@ -11,7 +11,6 @@ import { getUserById, getUsers } from "../services/users"
 import { getZones } from "../services/zones"
 import { getProperties } from "../services/properties"
 
-// ── Guard de sesión ──────────────────────────────────────────
 const session = await getSession(Astro.cookies)
 if (!session) return Astro.redirect('/login')
 
@@ -19,13 +18,8 @@ const me = await getUserById(session.sub)
 if (!me) return Astro.redirect('/login')
 
 const isAdmin = session.role === 'admin'
-
-// ── Datos según rol ──────────────────────────────────────────
-// Admin: usuarios + zonas + propiedades · Agente: zonas + propiedades
 const [zonesList, propertiesList] = await Promise.all([getZones(), getProperties()])
 const usersList = isAdmin ? await getUsers() : []
-
-// ── Helpers de presentación ──────────────────────────────────
 const tones = ['olive', 'bronze', 'sage'] as const
 const toneFor = (i: number) => tones[i % tones.length]
 
@@ -173,7 +167,14 @@ const propertyStatusLabel: Record<string, string> = {
                                         </div>
 
                                         <div class="user-actions">
-                                            <button type="button" class="icon-btn" aria-label={`Editar ${user.name}`}><Edit /></button>
+                                            <button type="button" class="icon-btn"
+                                                data-edit-user={user.id}
+                                                data-name={user.name}
+                                                data-email={user.email}
+                                                data-phone={user.phone ?? ''}
+                                                data-role={user.role}
+                                                data-avatar={user.avatar_url ?? ''}
+                                                aria-label={`Editar ${user.name}`}><Edit /></button>
                                             { user.id !== me.id && (
                                                 <button type="button" class="icon-btn icon-btn--danger" data-delete-user={user.id} data-user-name={user.name} aria-label={`Eliminar ${user.name}`}><Trash /></button>
                                             ) }
@@ -348,9 +349,6 @@ const propertyStatusLabel: Record<string, string> = {
 </html>
 
 <script>
-    // ── Modal de confirmación reutilizable ───────────────────
-    // Devuelve una promesa que resuelve a true (aceptar) o false (cancelar).
-    // Reutilizable para usuarios, zonas y propiedades.
     const confirmModal     = document.querySelector<HTMLDialogElement>('#confirm-modal');
     const confirmTitle     = document.querySelector<HTMLElement>('#confirm-title');
     const confirmMessage   = document.querySelector<HTMLElement>('#confirm-message');
@@ -377,7 +375,7 @@ const propertyStatusLabel: Record<string, string> = {
 
             confirmAcceptBtn?.addEventListener('click', onAccept);
             confirmCancelBtn?.addEventListener('click', onCancel);
-            confirmModal.addEventListener('cancel', onCancel);  // tecla ESC
+            confirmModal.addEventListener('cancel', onCancel);
             confirmModal.addEventListener('click', onBackdrop);
             confirmModal.showModal();
         });
@@ -424,7 +422,6 @@ const propertyStatusLabel: Record<string, string> = {
         }
     });
 
-    // ── Modal: new user ─────────────────────────────────
     const modal     = document.querySelector<HTMLDialogElement>('#new-user-modal');
     const openBtn   = document.querySelector<HTMLButtonElement>('#open-new-user');
     const closeBtn  = document.querySelector<HTMLButtonElement>('#nu-close');
@@ -433,7 +430,7 @@ const propertyStatusLabel: Record<string, string> = {
     const preview   = document.querySelector<HTMLSpanElement>('#nu-avatar-preview');
     const newUserForm = document.querySelector<HTMLFormElement>('#new-user-form');
 
-    openBtn?.addEventListener('click', () => modal?.showModal());
+    openBtn?.addEventListener('click', () => openCreate());
     closeBtn?.addEventListener('click', () => modal?.close());
     cancelBtn?.addEventListener('click', () => modal?.close());
 
@@ -460,6 +457,59 @@ const propertyStatusLabel: Record<string, string> = {
     const passwordError = document.querySelector<HTMLParagraphElement>('#nu-password-error');
     const nuFormError   = document.querySelector<HTMLParagraphElement>('#nu-form-error');
     const submitBtn     = newUserForm?.querySelector<HTMLButtonElement>('.btn-primary');
+    const phoneInput    = document.querySelector<HTMLInputElement>('#nu-phone');
+    const roleSelect    = document.querySelector<HTMLSelectElement>('#nu-role');
+    const modalTitle    = document.querySelector<HTMLElement>('#nu-title');
+
+    let editingUserId: string | null = null;
+
+    function resetUserForm() {
+        newUserForm?.reset();
+        setFieldError(nameError, nameInput, '');
+        setFieldError(emailError, emailInput, '');
+        setFieldError(passwordError, passwordInput, '');
+        if (nuFormError) nuFormError.textContent = '';
+        if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = null; }
+        if (preview) preview.style.backgroundImage = '';
+    }
+
+    function openCreate() {
+        editingUserId = null;
+        resetUserForm();
+        if (modalTitle) modalTitle.textContent = 'Nuevo usuario';
+        if (passwordInput) {
+            passwordInput.required = true;
+            passwordInput.placeholder = 'Mínimo 8 caracteres';
+        }
+        if (submitBtn) submitBtn.textContent = 'Crear';
+        modal?.showModal();
+    }
+
+    function openEdit(btn: HTMLButtonElement) {
+        editingUserId = btn.dataset.editUser ?? null;
+        resetUserForm();
+        if (modalTitle) modalTitle.textContent = 'Editar usuario';
+        if (nameInput)  nameInput.value  = btn.dataset.name  ?? '';
+        if (emailInput) emailInput.value = btn.dataset.email ?? '';
+        if (phoneInput) phoneInput.value = btn.dataset.phone ?? '';
+        if (roleSelect) roleSelect.value = btn.dataset.role  ?? 'agent';
+        if (passwordInput) {
+            passwordInput.required = false;
+            passwordInput.placeholder = 'Dejar en blanco para no cambiarla';
+        }
+        const avatar = btn.dataset.avatar;
+        if (avatar && preview) {
+            preview.style.backgroundImage = `url(${avatar})`;
+            preview.style.backgroundSize = 'cover';
+            preview.style.backgroundPosition = 'center';
+        }
+        if (submitBtn) submitBtn.textContent = 'Guardar';
+        modal?.showModal();
+    }
+
+    document.querySelectorAll<HTMLButtonElement>('[data-edit-user]').forEach(btn => {
+        btn.addEventListener('click', () => openEdit(btn));
+    });
 
     const emailRe    = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const passwordRe = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
@@ -502,22 +552,28 @@ const propertyStatusLabel: Record<string, string> = {
             valid = false;
         } else setFieldError(emailError, emailInput, '');
 
-        if (!password) {
+        if (!editingUserId && !password) {
             setFieldError(passwordError, passwordInput, 'Introduce una contraseña.');
             valid = false;
-        } else if (!passwordRe.test(password)) {
+        } else if (password && !passwordRe.test(password)) {
             setFieldError(passwordError, passwordInput, 'Mínimo 8 caracteres, con mayúscula, minúscula y número.');
             valid = false;
         } else setFieldError(passwordError, passwordInput, '');
 
         if (!valid) return;
 
+        const isEdit = editingUserId !== null;
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Creando…';
+        submitBtn.textContent = isEdit ? 'Guardando…' : 'Creando…';
 
         try {
             const formData = new FormData(newUserForm);
-            const res = await fetch('/api/users', { method: 'POST', body: formData });
+            if (isEdit && !password) formData.delete('password');
+
+            const res = await fetch(
+                isEdit ? `/api/users/${editingUserId}` : '/api/users',
+                { method: isEdit ? 'PATCH' : 'POST', body: formData },
+            );
 
             if (res.ok) {
                 window.location.reload();
@@ -526,13 +582,14 @@ const propertyStatusLabel: Record<string, string> = {
 
             const data = await res.json().catch(() => ({})) as { error?: string };
             if (nuFormError) {
-                nuFormError.textContent = (data.error && apiErrors[data.error]) ?? 'No se pudo crear el usuario. Inténtalo de nuevo.';
+                nuFormError.textContent = (data.error && apiErrors[data.error])
+                    ?? (isEdit ? 'No se pudo guardar. Inténtalo de nuevo.' : 'No se pudo crear el usuario. Inténtalo de nuevo.');
             }
         } catch {
             if (nuFormError) nuFormError.textContent = 'Error de conexión. Inténtalo de nuevo.';
         } finally {
             submitBtn.disabled = false;
-            submitBtn.textContent = 'Crear';
+            submitBtn.textContent = isEdit ? 'Guardar' : 'Crear';
         }
     });
 
