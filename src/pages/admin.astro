@@ -127,9 +127,7 @@ const propertyStatusLabel: Record<string, string> = {
                     </ul>
                 </nav>
 
-                <form class="logout-form" method="POST" action="/api/logout">
-                    <button type="submit" class="logout-link"><Logout /> Cerrar sesión</button>
-                </form>
+                <button type="button" class="logout-link" id="logout-btn"><Logout /> Cerrar sesión</button>
             </aside>
 
             <div class="panels">
@@ -301,9 +299,23 @@ const propertyStatusLabel: Record<string, string> = {
         });
     });
 
-    // Panel inicial: el marcado como activo desde el servidor o el primero.
     const initial = document.querySelector<HTMLAnchorElement>('.sidebar-nav a.is-active') ?? navLinks[0];
     if (initial) activate(initial.getAttribute('href')!);
+
+    const logoutBtn = document.querySelector<HTMLButtonElement>('#logout-btn');
+    logoutBtn?.addEventListener('click', async () => {
+        logoutBtn.disabled = true;
+        try {
+            const res = await fetch('/api/logout', { method: 'POST' });
+            if (res.ok) {
+                window.location.href = '/login';
+                return;
+            }
+            logoutBtn.disabled = false;
+        } catch {
+            logoutBtn.disabled = false;
+        }
+    });
 </script>
 
 <style>
@@ -537,9 +549,18 @@ const propertyStatusLabel: Record<string, string> = {
         align-items: center;
         gap: 10px;
         padding: 16px 14px 0;
+        font-family: var(--havre-font-sans);
         font-size: var(--havre-text-small);
         font-weight: var(--havre-weight-semibold);
         color: var(--havre-bronze-text);
+        background: none;
+        border: none;
+        cursor: pointer;
+    }
+
+    .logout-link:disabled {
+        opacity: 0.6;
+        cursor: default;
     }
 
     .panel {
@@ -710,19 +731,6 @@ const propertyStatusLabel: Record<string, string> = {
         text-align: center;
         font-size: var(--havre-text-small);
         color: var(--havre-ink-500);
-    }
-
-    .logout-form {
-        margin: 0;
-        padding: 0;
-    }
-
-    .logout-form .logout-link {
-        width: 100%;
-        background: none;
-        border: none;
-        font-family: var(--havre-font-sans);
-        cursor: pointer;
     }
 
     .badge--muted     { background: var(--havre-chip-bg);     color: var(--havre-ink-700);     }
