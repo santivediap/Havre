@@ -9,6 +9,29 @@ export async function getUsers() {
         .orderBy(users.created_at);
 }
 
+export async function getUserForAuth(email: string) {
+    const [user] = await db
+        .select({
+            id:        users.id,
+            name:      users.name,
+            email:     users.email,
+            password:  users.password,
+            role:      users.role,
+            is_active: users.is_active,
+        })
+        .from(users)
+        .where(eq(users.email, email));
+
+    return user ?? null;
+}
+
+export async function touchLastLogin(id: string) {
+    await db
+        .update(users)
+        .set({ last_login_at: new Date() })
+        .where(eq(users.id, id));
+}
+
 export async function getUserById(id: string) {
     const [user] = await db
         .select(publicUserColumns)
