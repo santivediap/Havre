@@ -19,6 +19,12 @@ export const userRoleEnum = pgEnum('user_role', ['admin', 'agent']);
 
 // ─── Tables ───────────────────────────────────────────────────────────────────
 
+export const countries = pgTable('countries', {
+    id:   serial('id').primaryKey(),
+    name: varchar('name', { length: 100 }).notNull(),
+    slug: varchar('slug', { length: 100 }).notNull().unique(),
+});
+
 export const users = pgTable('users', {
     id:            uuid('id').defaultRandom().primaryKey(),
     name:          varchar('name', { length: 100 }).notNull(),
