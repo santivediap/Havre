@@ -3,6 +3,7 @@ import Header from "../components/Header.astro"
 import Footer from "../components/Footer.astro"
 import "../styles/global.css"
 import ArrowRight from "../components/icons/ArrowRight.astro"
+import { getZones } from '../services/zones'
 
 const stats = [
     { value: "6",    label: "Regiones rurales" },
@@ -11,62 +12,10 @@ const stats = [
     { value: "24 h", label: "Respuesta media" },
 ]
 
-const zones = [
-    {
-        country:     "Italia",
-        name:        "Toscana",
-        slug:        "toscana",
-        count:       84,
-        description: "Colinas de olivos y cipreses, masías de piedra y luz dorada al atardecer. El refugio rural por excelencia.",
-        tags:        ["Olivares", "Masías", "Viñedos"],
-        priceFrom:   "420.000",
-    },
-    {
-        country:     "Francia",
-        name:        "Provenza",
-        slug:        "provenza",
-        count:       61,
-        description: "Campos de lavanda, bastides de postigos azules y mercados de pueblo. Calma mediterránea tierra adentro.",
-        tags:        ["Lavanda", "Bastides", "Mercados"],
-        priceFrom:   "380.000",
-    },
-    {
-        country:     "España",
-        name:        "Pirineos",
-        slug:        "pirineos",
-        count:       47,
-        description: "Valles silenciosos, bosques de haya y caseríos de piedra con vistas que no se olvidan. Lo rural en estado puro.",
-        tags:        ["Montaña", "Valles", "Bosques"],
-        priceFrom:   "310.000",
-    },
-    {
-        country:     "Portugal",
-        name:        "Alentejo",
-        slug:        "alentejo",
-        count:       39,
-        description: "Llanuras infinitas de alcornoques, quintas con naranjos y una luz que alarga las tardes. Portugal en su esencia.",
-        tags:        ["Corchos", "Quintas", "Naranjos"],
-        priceFrom:   "290.000",
-    },
-    {
-        country:     "Italia",
-        name:        "Umbría",
-        slug:        "umbria",
-        count:       34,
-        description: "El corazón verde de Italia: colinas suaves, casali de piedra y pueblos medievales a lo lejos.",
-        tags:        ["Casali", "Colinas", "Lavanda"],
-        priceFrom:   "410.000",
-    },
-    {
-        country:     "España",
-        name:        "Empordà",
-        slug:        "emporda",
-        count:       52,
-        description: "Viñedos frente al mar, masías entre olivos y la tramontana que lo mantiene todo en su sitio. Costa e interior a la vez.",
-        tags:        ["Viñedos", "Costa", "Masías"],
-        priceFrom:   "350.000",
-    },
-]
+const zoneList = await getZones()
+
+const formatPrice = (price: number | null) =>
+    price ? new Intl.NumberFormat('es-ES').format(price) : '0'
 ---
 
 <!DOCTYPE html>
@@ -100,10 +49,10 @@ const zones = [
 
         <section class="zones" aria-label="Zonas rurales disponibles">
             <ul class="zones-grid" role="list">
-                { zones.map(zone => (
+                { zoneList.map(zone => (
                     <li>
                         <article class="zone-card">
-                            <div class="zone-image">
+                            <div class="zone-image" style={zone.image_url ? `--img: url(${zone.image_url})` : undefined}>
                                 <p class="zone-country">{zone.country}</p>
                                 <footer class="zone-image-footer">
                                     <h2 class="zone-name">{zone.name}</h2>
@@ -115,13 +64,13 @@ const zones = [
                                 <p class="zone-desc">{zone.description}</p>
 
                                 <ul class="zone-tags" role="list">
-                                    { zone.tags.map(tag => (
+                                    { zone.tags?.map(tag => (
                                         <li class="zone-tag">{tag}</li>
                                     )) }
                                 </ul>
 
                                 <div class="zone-footer">
-                                    <p class="zone-price">Desde <span>€ {zone.priceFrom}</span></p>
+                                    <p class="zone-price">Desde <span>€ {formatPrice(zone.price_from)}</span></p>
                                     <a class="zone-link" href={`/zonas/${zone.slug}`}>Ver propiedades <ArrowRight/></a>
                                 </div>
                             </div>
@@ -234,12 +183,10 @@ const zones = [
 
     .zone-image {
         height: 250px;
-        background: linear-gradient(
-                rgba(46, 42, 32, 0) 0%,
-                rgba(46, 42, 32, 0) 40%,
-                rgba(46, 42, 32, 0.65) 100%
-            ),
-            var(--havre-sage-active);
+        background:
+            linear-gradient(rgba(46, 42, 32, 0) 0%, rgba(46, 42, 32, 0) 40%, rgba(46, 42, 32, 0.65) 100%),
+            linear-gradient(rgba(110, 122, 78, 0) 0%, rgba(101, 114, 70, .25) 40%, rgba(101, 114, 70, .9) 100%),
+            var(--img, var(--havre-sage-active)) center / cover no-repeat;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -248,7 +195,7 @@ const zones = [
 
     .zone-country {
         align-self: flex-start;
-        background: rgba(46, 42, 32, 0.45);
+        background: rgba(46, 42, 32, 0.65);
         color: var(--havre-white);
         font-size: var(--havre-text-label);
         font-weight: var(--havre-weight-medium);
