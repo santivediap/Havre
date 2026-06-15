@@ -13,7 +13,7 @@ export const GET: APIRoute = async () => {
         return json({ users: list }, 200);
     } catch (err) {
         console.error(err);
-        return json({ error: 'Error interno del servidor' }, 500);
+        return json({ error: 'Internal server error' }, 500);
     }
 };
 
@@ -22,17 +22,17 @@ export const POST: APIRoute = async ({ request }) => {
     try {
         body = await request.json();
     } catch {
-        return json({ error: 'Body inválido' }, 400);
+        return json({ error: 'Invalid body' }, 400);
     }
 
     const { name, email, password, role, phone, avatar_url } = body;
 
     if (!name || !email || !password) {
-        return json({ error: 'name, email y password son obligatorios' }, 400);
+        return json({ error: 'name, email and password are required' }, 400);
     }
 
     if (!emailRegex.test(String(email))) {
-        return json({ error: 'El formato del email no es válido' }, 400);
+        return json({ error: 'Invalid email format' }, 400);
     }
 
     const hashed = await bcrypt.hash(String(password), 12);
@@ -60,9 +60,9 @@ export const POST: APIRoute = async ({ request }) => {
         return json({ user }, 201);
     } catch (err: any) {
         if (err?.code === '23505') {
-            return json({ error: 'Ya existe un usuario con ese email' }, 409);
+            return json({ error: 'Email already in use' }, 409);
         }
         console.error(err);
-        return json({ error: 'Error interno del servidor' }, 500);
+        return json({ error: 'Internal server error' }, 500);
     }
 };
