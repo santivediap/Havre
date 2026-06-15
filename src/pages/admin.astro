@@ -1,0 +1,732 @@
+---
+import "../styles/global.css"
+import Users from "../components/icons/Users.astro"
+import Map from "../components/icons/Map.astro"
+import Home from "../components/icons/Home.astro"
+import Logout from "../components/icons/Logout.astro"
+import Edit from "../components/icons/Edit.astro"
+import Trash from "../components/icons/Trash.astro"
+import { getSession } from "../lib/auth"
+import { getUserById, getUsers } from "../services/users"
+import { getZones } from "../services/zones"
+import { getProperties } from "../services/properties"
+
+// ── Guard de sesión ──────────────────────────────────────────
+const session = await getSession(Astro.cookies)
+if (!session) return Astro.redirect('/login')
+
+const me = await getUserById(session.sub)
+if (!me) return Astro.redirect('/login')
+
+const isAdmin = session.role === 'admin'
+
+// ── Datos según rol ──────────────────────────────────────────
+// Admin: usuarios + zonas + propiedades · Agente: zonas + propiedades
+const [zonesList, propertiesList] = await Promise.all([getZones(), getProperties()])
+const usersList = isAdmin ? await getUsers() : []
+
+// ── Helpers de presentación ──────────────────────────────────
+const tones = ['olive', 'bronze', 'sage'] as const
+const toneFor = (i: number) => tones[i % tones.length]
+
+const initials = (name: string) =>
+    name.trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('')
+
+const roleLabel = (role: string) => role === 'admin' ? 'Administrador' : 'Agente'
+
+const monthYear = (date: Date | string) =>
+    new Intl.DateTimeFormat('es-ES', { month: 'short', year: 'numeric' }).format(new Date(date))
+
+const formatPrice = (price: number) => `€ ${new Intl.NumberFormat('es-ES').format(price)}`
+
+function userStatus(u: { is_active: boolean; last_login_at: Date | string | null }) {
+    if (!u.is_active)     return { label: 'Inactivo', cls: 'status--invited' }
+    if (!u.last_login_at) return { label: 'Invitado', cls: 'status--invited' }
+    return { label: 'Activo', cls: 'status--active' }
+}
+
+const propertyStatusLabel: Record<string, string> = {
+    draft: 'Borrador', published: 'Publicado', archived: 'Archivado',
+}
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Panel de administración | Havre</title>
+    <meta name="description" content="Panel interno de Havre para la gestión de usuarios, zonas y propiedades.">
+</head>
+<body>
+
+    <header class="admin-header">
+        <div class="admin-header-box">
+            <a class="logo" href="/">Havre</a>
+
+            <nav class="admin-header-nav" aria-label="Navegación del sitio">
+                <a href="/comprar">Comprar</a>
+                <a href="/vender">Vender</a>
+                <a href="/zonas">Zonas</a>
+                <a href="/about-us">Sobre Havre</a>
+            </nav>
+
+            <div class="header-user">
+                <span class="avatar avatar--olive" aria-hidden="true">
+                    { me.avatar_url ? <img src={me.avatar_url} alt="" /> : initials(me.name) }
+                </span>
+                <span class="header-user-text">
+                    <strong>{me.name}</strong>
+                    <small>{roleLabel(me.role)}</small>
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <main class="admin">
+
+        <section class="profile-card" aria-label="Perfil del usuario">
+            <div class="profile-identity">
+                <span class="avatar avatar--lg avatar--olive" aria-hidden="true">
+                    { me.avatar_url ? <img src={me.avatar_url} alt="" /> : initials(me.name) }
+                </span>
+                <div>
+                    <h1>
+                        {me.name}
+                        <span class={`badge badge--dot ${isAdmin ? "badge--admin" : "badge--agent"}`}>{roleLabel(me.role)}</span>
+                    </h1>
+                    <p class="profile-email">{me.email}</p>
+                    <p class="profile-since">En Havre desde {monthYear(me.created_at)}</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="admin-body">
+
+            <aside class="admin-sidebar" aria-label="Secciones del panel">
+                <nav class="sidebar-nav">
+                    <ul>
+                        { isAdmin && (
+                            <li>
+                                <a href="#usuarios" class="is-active" aria-current="page">
+                                    <Users /> <span>Usuarios</span> <em>{usersList.length}</em>
+                                </a>
+                            </li>
+                        ) }
+                        <li>
+                            <a href="#zonas" class={!isAdmin ? "is-active" : ""} aria-current={!isAdmin ? "page" : undefined}>
+                                <Map /> <span>Zonas</span> <em>{zonesList.length}</em>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#propiedades">
+                                <Home /> <span>Propiedades</span> <em>{propertiesList.length}</em>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+
+                <form class="logout-form" method="POST" action="/api/logout">
+                    <button type="submit" class="logout-link"><Logout /> Cerrar sesión</button>
+                </form>
+            </aside>
+
+            <div class="panels">
+
+                { isAdmin && (
+                    <section class="panel" id="usuarios" aria-labelledby="users-heading">
+                        <div class="panel-header">
+                            <div>
+                                <h2 id="users-heading">Usuarios del equipo</h2>
+                                <p>Da de alta, edita roles o retira el acceso de cada persona.</p>
+                            </div>
+                            <button type="button" class="new-user-btn"><span aria-hidden="true">+</span> Nuevo usuario</button>
+                        </div>
+
+                        <ul class="user-list" role="list">
+                            { usersList.length === 0 && <li class="empty">Aún no hay usuarios.</li> }
+                            { usersList.map((user, i) => {
+                                const status = userStatus(user)
+                                return (
+                                    <li class="user-row">
+                                        <span class={`avatar avatar--${toneFor(i)}`} aria-hidden="true">
+                                            { user.avatar_url
+                                                ? <img src={user.avatar_url} alt="" />
+                                                : initials(user.name) }
+                                        </span>
+
+                                        <div class="user-identity">
+                                            <p class="user-name">
+                                                {user.name}
+                                                <span class={`badge ${user.role === "admin" ? "badge--admin" : "badge--agent"}`}>{roleLabel(user.role)}</span>
+                                            </p>
+                                            <p class="user-email">{user.email}</p>
+                                        </div>
+
+                                        <div class="user-meta">
+                                            <span class="meta-value">{user.last_login_at ? monthYear(user.last_login_at) : "—"}</span>
+                                            <span class="meta-label">último acceso</span>
+                                        </div>
+
+                                        <div class="user-meta">
+                                            <span class={`meta-value ${status.cls}`}>{status.label}</span>
+                                            <span class="meta-label">estado</span>
+                                        </div>
+
+                                        <div class="user-actions">
+                                            <button type="button" class="icon-btn" aria-label={`Editar ${user.name}`}><Edit /></button>
+                                            <button type="button" class="icon-btn icon-btn--danger" aria-label={`Eliminar ${user.name}`}><Trash /></button>
+                                        </div>
+                                    </li>
+                                )
+                            }) }
+                        </ul>
+                    </section>
+                ) }
+
+                <section class="panel" id="zonas" aria-labelledby="zones-heading">
+                    <div class="panel-header">
+                        <div>
+                            <h2 id="zones-heading">Zonas</h2>
+                            <p>Las regiones rurales publicadas en la web.</p>
+                        </div>
+                        <button type="button" class="new-user-btn"><span aria-hidden="true">+</span> Nueva zona</button>
+                    </div>
+
+                    <ul class="user-list" role="list">
+                        { zonesList.length === 0 && <li class="empty">Aún no hay zonas.</li> }
+                        { zonesList.map((zone, i) => (
+                            <li class="user-row">
+                                <span class={`avatar avatar--${toneFor(i)}`} aria-hidden="true">
+                                    { zone.image_url
+                                        ? <img src={zone.image_url} alt="" />
+                                        : initials(zone.name) }
+                                </span>
+
+                                <div class="user-identity">
+                                    <p class="user-name">{zone.name}</p>
+                                    <p class="user-country">{zone.country.toUpperCase()}</p>
+                                </div>
+
+                                <div class="user-meta">
+                                    <span class="meta-value">{zone.count}</span>
+                                    <span class="meta-label">activas</span>
+                                </div>
+
+                                <div class="user-meta">
+                                    <span class="meta-value">{zone.price_from ? formatPrice(zone.price_from) : "—"}</span>
+                                    <span class="meta-label">desde</span>
+                                </div>
+
+                                <div class="user-actions">
+                                    <button type="button" class="icon-btn" aria-label={`Editar ${zone.name}`}><Edit /></button>
+                                    <button type="button" class="icon-btn icon-btn--danger" aria-label={`Eliminar ${zone.name}`}><Trash /></button>
+                                </div>
+                            </li>
+                        )) }
+                    </ul>
+                </section>
+
+                <section class="panel" id="propiedades" aria-labelledby="properties-heading">
+                    <div class="panel-header">
+                        <div>
+                            <h2 id="properties-heading">Propiedades</h2>
+                            <p>El catálogo de fincas y casas de campo.</p>
+                        </div>
+                        <button type="button" class="new-user-btn"><span aria-hidden="true">+</span> Nueva propiedad</button>
+                    </div>
+
+                    <ul class="user-list" role="list">
+                        { propertiesList.length === 0 && <li class="empty">Aún no hay propiedades.</li> }
+                        { propertiesList.map((property, i) => (
+                            <li class="user-row">
+                                <span class={`avatar avatar--${toneFor(i)}`} aria-hidden="true">{initials(property.title)}</span>
+
+                                <div class="user-identity">
+                                    <p class="user-name">
+                                        {property.title}
+                                        <span class={`badge badge--${property.status}`}>{propertyStatusLabel[property.status]}</span>
+                                    </p>
+                                    <p class="user-email">{property.zone} · {property.reference}</p>
+                                </div>
+
+                                <div class="user-meta">
+                                    <span class="meta-value">{formatPrice(property.price)}</span>
+                                    <span class="meta-label">precio</span>
+                                </div>
+
+                                <div class="user-meta">
+                                    <span class="meta-value">{property.agent}</span>
+                                    <span class="meta-label">asesor</span>
+                                </div>
+
+                                <div class="user-actions">
+                                    <button type="button" class="icon-btn" aria-label={`Editar ${property.title}`}><Edit /></button>
+                                    <button type="button" class="icon-btn icon-btn--danger" aria-label={`Eliminar ${property.title}`}><Trash /></button>
+                                </div>
+                            </li>
+                        )) }
+                    </ul>
+                </section>
+
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>
+
+<script>
+    const navLinks = document.querySelectorAll<HTMLAnchorElement>('.sidebar-nav a');
+    const panels   = document.querySelectorAll<HTMLElement>('.panel');
+
+    function activate(targetId: string) {
+        panels.forEach(panel => {
+            panel.hidden = `#${panel.id}` !== targetId;
+        });
+        navLinks.forEach(link => {
+            const isActive = link.getAttribute('href') === targetId;
+            link.classList.toggle('is-active', isActive);
+            if (isActive) link.setAttribute('aria-current', 'page');
+            else link.removeAttribute('aria-current');
+        });
+    }
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (event) => {
+            event.preventDefault();
+            const target = link.getAttribute('href');
+            if (target) activate(target);
+        });
+    });
+
+    // Panel inicial: el marcado como activo desde el servidor o el primero.
+    const initial = document.querySelector<HTMLAnchorElement>('.sidebar-nav a.is-active') ?? navLinks[0];
+    if (initial) activate(initial.getAttribute('href')!);
+</script>
+
+<style>
+    .admin-header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        height: 76px;
+        display: flex;
+        align-items: center;
+        padding: 0 calc(var(--havre-space-5) * 4);
+        background: rgba(251, 249, 240, 0.9);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--havre-border);
+    }
+
+    .admin-header-box {
+        width: 100%;
+        max-width: 1240px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .logo {
+        font-family: var(--havre-font-serif);
+        font-weight: var(--havre-weight-bold);
+        font-size: var(--havre-text-h3);
+        color: var(--havre-ink-900);
+    }
+
+    .admin-header-nav {
+        display: flex;
+        gap: calc(var(--havre-space-6) * 3);
+
+        a {
+            font-weight: var(--havre-weight-medium);
+            color: var(--havre-ink-700);
+        }
+
+        a:hover { color: var(--havre-bronze-text); }
+    }
+
+    .header-user {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .header-user-text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+
+        strong {
+            font-size: var(--havre-text-small);
+            font-weight: var(--havre-weight-semibold);
+            color: var(--havre-ink-900);
+        }
+
+        small {
+            font-size: var(--havre-text-label);
+            color: var(--havre-ink-500);
+        }
+    }
+
+    .avatar {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 55px;
+        height: 55px;
+        border-radius: var(--havre-radius-md);
+        font-family: var(--havre-font-serif);
+        font-weight: var(--havre-weight-semibold);
+        font-size: var(--havre-text-body);
+        color: var(--havre-white);
+        letter-spacing: 0.02em;
+    }
+
+    .avatar--lg {
+        width: 76px;
+        height: 76px;
+        border-radius: var(--havre-radius-lg);
+        font-size: var(--havre-text-h3);
+    }
+
+    .avatar--olive  { background-image: repeating-linear-gradient(135deg, #B3BA8A 0 9px, #A7AE7D 9px 18px); }
+    .avatar--bronze { background-image: repeating-linear-gradient(135deg, #D4A373 0 9px, #C79264 9px 18px); }
+    .avatar--sage   { background-image: repeating-linear-gradient(135deg, #CFD8B4 0 9px, #C3CDA1 9px 18px); }
+
+    .avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: inherit;
+        display: block;
+    }
+
+    .admin {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 32px calc(var(--havre-space-5) * 4) 80px;
+    }
+
+    .profile-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        background: var(--havre-white);
+        border: 1px solid var(--havre-border-card);
+        border-radius: var(--havre-radius-2xl);
+        box-shadow: var(--havre-shadow-sm);
+        padding: 28px 32px;
+        margin-bottom: 24px;
+    }
+
+    .profile-identity {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .profile-identity h1 {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-h2);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-900);
+        margin: 0 0 4px;
+    }
+
+    .profile-email {
+        font-family: var(--havre-font-mono);
+        font-size: var(--havre-text-small);
+        color: var(--havre-ink-500);
+        margin: 0 0 6px;
+    }
+
+    .profile-since {
+        font-family: var(--havre-font-mono);
+        font-size: var(--havre-text-label);
+        letter-spacing: 0.04em;
+        color: var(--havre-ink-300);
+        margin: 0;
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        border-radius: var(--havre-radius-full);
+        padding: 4px 11px;
+        white-space: nowrap;
+    }
+
+    .badge--admin { background: var(--havre-bronze-soft); color: var(--havre-bronze-text); }
+    .badge--agent { background: var(--havre-sage-soft);   color: var(--havre-success);     }
+
+    .badge--dot::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    .admin-body {
+        display: grid;
+        grid-template-columns: 240px 1fr;
+        gap: 24px;
+        align-items: start;
+    }
+
+    .sidebar-nav {
+        background: var(--havre-white);
+        border: 1px solid var(--havre-border-card);
+        border-radius: var(--havre-radius-xl);
+        box-shadow: var(--havre-shadow-sm);
+        padding: 12px;
+
+        ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 14px;
+            border-radius: var(--havre-radius-md);
+            font-size: var(--havre-text-small);
+            font-weight: var(--havre-weight-medium);
+            color: var(--havre-ink-700);
+            transition: background 0.12s ease, color 0.12s ease;
+        }
+
+        a span { flex: 1; }
+
+        a em {
+            font-style: normal;
+            font-size: var(--havre-text-label);
+            color: var(--havre-ink-300);
+        }
+
+        a:hover { background: var(--havre-surface); }
+
+        a.is-active {
+            background: var(--havre-bronze-soft);
+            color: var(--havre-bronze-text);
+            font-weight: var(--havre-weight-semibold);
+        }
+
+        a.is-active em { color: var(--havre-bronze-text); }
+    }
+
+    .logout-link {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 16px 14px 0;
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-bronze-text);
+    }
+
+    .panel {
+        background: var(--havre-white);
+        border: 1px solid var(--havre-border-card);
+        border-radius: var(--havre-radius-xl);
+        box-shadow: var(--havre-shadow-sm);
+        padding: 28px 32px;
+    }
+
+    .panel-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 24px;
+    }
+
+    .panel-header h2 {
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-h3);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-900);
+        margin: 0 0 4px;
+    }
+
+    .panel-header p {
+        font-size: var(--havre-text-small);
+        color: var(--havre-ink-500);
+        margin: 0;
+    }
+
+    .new-user-btn {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--havre-bronze-default);
+        color: var(--havre-white);
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        border: none;
+        border-radius: var(--havre-radius-md);
+        padding: 11px 20px;
+        cursor: pointer;
+        transition: background 0.12s ease;
+
+        span { font-size: var(--havre-text-body); line-height: 1; }
+
+        &:hover { background: var(--havre-bronze-hover); }
+    }
+
+    .user-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .user-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 0;
+        border-top: 1px solid var(--havre-divider);
+    }
+
+    .user-row:first-child { border-top: none; }
+
+    .user-identity {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .user-name {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-subtitle);
+        font-weight: var(--havre-weight-bold);
+        color: var(--havre-ink-900);
+        margin: 0 0 2px;
+    }
+
+    .user-email {
+        font-family: var(--havre-font-mono);
+        font-size: var(--havre-text-small);
+        color: var(--havre-ink-500);
+        margin: 0;
+    }
+
+    .user-country {
+        font-size: var(--havre-text-label);
+        font-weight: var(--havre-weight-bold);
+        letter-spacing: var(--havre-tracking-label);
+        color: var(--havre-ink-300);
+        margin: 0;
+    }
+
+    .user-meta {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 3px;
+        width: 130px;
+        text-align: right;
+    }
+
+    .meta-value {
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-900);
+    }
+
+    .meta-label {
+        font-family: var(--havre-font-mono);
+        font-size: var(--havre-text-label);
+        color: var(--havre-ink-300);
+    }
+
+    .status--active  { color: var(--havre-ink-900);  }
+    .status--invited { color: var(--havre-success); }
+
+    .user-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .icon-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        background: var(--havre-surface);
+        border: 1px solid var(--havre-border-card);
+        border-radius: var(--havre-radius-md);
+        color: var(--havre-ink-700);
+        cursor: pointer;
+        transition: all 0.12s ease;
+
+        &:hover {
+            background: var(--havre-bronze-soft);
+            color: var(--havre-bronze-text);
+            border-color: var(--havre-bronze-soft);
+        }
+    }
+
+    .icon-btn--danger:hover {
+        background: var(--havre-error-soft);
+        color: var(--havre-error);
+        border-color: var(--havre-error-soft);
+    }
+
+    .panels {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .panel[hidden] {
+        display: none;
+    }
+
+    .empty {
+        padding: 24px 0;
+        text-align: center;
+        font-size: var(--havre-text-small);
+        color: var(--havre-ink-500);
+    }
+
+    .logout-form {
+        margin: 0;
+        padding: 0;
+    }
+
+    .logout-form .logout-link {
+        width: 100%;
+        background: none;
+        border: none;
+        font-family: var(--havre-font-sans);
+        cursor: pointer;
+    }
+
+    .badge--muted     { background: var(--havre-chip-bg);     color: var(--havre-ink-700);     }
+    .badge--published { background: var(--havre-sage-soft);   color: var(--havre-success);     }
+    .badge--draft     { background: var(--havre-bronze-soft); color: var(--havre-bronze-text); }
+    .badge--archived  { background: var(--havre-chip-bg);     color: var(--havre-ink-500);     }
+</style>

@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { env } from 'cloudflare:workers';
+import type { AstroCookies } from 'astro';
 
 const ALG = 'HS256';
 
@@ -36,4 +37,10 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
     } catch {
         return null;
     }
+}
+
+export async function getSession(cookies: AstroCookies): Promise<SessionPayload | null> {
+    const token = cookies.get(SESSION_COOKIE)?.value;
+    if (!token) return null;
+    return verifySession(token);
 }
