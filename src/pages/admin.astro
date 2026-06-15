@@ -174,7 +174,9 @@ const propertyStatusLabel: Record<string, string> = {
 
                                         <div class="user-actions">
                                             <button type="button" class="icon-btn" aria-label={`Editar ${user.name}`}><Edit /></button>
-                                            <button type="button" class="icon-btn icon-btn--danger" aria-label={`Eliminar ${user.name}`}><Trash /></button>
+                                            { user.id !== me.id && (
+                                                <button type="button" class="icon-btn icon-btn--danger" data-delete-user={user.id} data-user-name={user.name} aria-label={`Eliminar ${user.name}`}><Trash /></button>
+                                            ) }
                                         </div>
                                     </li>
                                 )
@@ -330,12 +332,57 @@ const propertyStatusLabel: Record<string, string> = {
                 </form>
             </dialog>
         ) }
+
+        <dialog class="confirm-modal" id="confirm-modal" aria-labelledby="confirm-title">
+            <div class="confirm-icon" aria-hidden="true"><Trash /></div>
+            <h2 class="confirm-title" id="confirm-title">Confirmar</h2>
+            <p class="confirm-message" id="confirm-message"></p>
+            <div class="confirm-actions">
+                <button type="button" class="btn-secondary" id="confirm-cancel">Cancelar</button>
+                <button type="button" class="btn-danger" id="confirm-accept">Eliminar</button>
+            </div>
+        </dialog>
     </main>
 
 </body>
 </html>
 
 <script>
+    // ── Modal de confirmación reutilizable ───────────────────
+    // Devuelve una promesa que resuelve a true (aceptar) o false (cancelar).
+    // Reutilizable para usuarios, zonas y propiedades.
+    const confirmModal     = document.querySelector<HTMLDialogElement>('#confirm-modal');
+    const confirmTitle     = document.querySelector<HTMLElement>('#confirm-title');
+    const confirmMessage   = document.querySelector<HTMLElement>('#confirm-message');
+    const confirmAcceptBtn = document.querySelector<HTMLButtonElement>('#confirm-accept');
+    const confirmCancelBtn = document.querySelector<HTMLButtonElement>('#confirm-cancel');
+
+    function askConfirm(opts: { title?: string; message: string; confirmLabel?: string }): Promise<boolean> {
+        return new Promise(resolve => {
+            if (!confirmModal) { resolve(false); return; }
+
+            if (confirmTitle)     confirmTitle.textContent     = opts.title ?? 'Confirmar';
+            if (confirmMessage)   confirmMessage.textContent   = opts.message;
+            if (confirmAcceptBtn) confirmAcceptBtn.textContent = opts.confirmLabel ?? 'Eliminar';
+
+            const cleanup = () => {
+                confirmAcceptBtn?.removeEventListener('click', onAccept);
+                confirmCancelBtn?.removeEventListener('click', onCancel);
+                confirmModal.removeEventListener('cancel', onCancel);
+                confirmModal.removeEventListener('click', onBackdrop);
+            };
+            const onAccept   = () => { cleanup(); confirmModal.close(); resolve(true); };
+            const onCancel   = () => { cleanup(); confirmModal.close(); resolve(false); };
+            const onBackdrop = (event: MouseEvent) => { if (event.target === confirmModal) onCancel(); };
+
+            confirmAcceptBtn?.addEventListener('click', onAccept);
+            confirmCancelBtn?.addEventListener('click', onCancel);
+            confirmModal.addEventListener('cancel', onCancel);  // tecla ESC
+            confirmModal.addEventListener('click', onBackdrop);
+            confirmModal.showModal();
+        });
+    }
+
     const navLinks = document.querySelectorAll<HTMLAnchorElement>('.sidebar-nav a');
     const panels   = document.querySelectorAll<HTMLElement>('.panel');
 
@@ -487,6 +534,43 @@ const propertyStatusLabel: Record<string, string> = {
             submitBtn.disabled = false;
             submitBtn.textContent = 'Crear';
         }
+    });
+
+    const usersCount = document.querySelector<HTMLElement>('.sidebar-nav a[href="#usuarios"] em');
+    const deleteErrors: Record<string, string> = {
+        'User has assigned properties': 'No se puede eliminar: el usuario tiene propiedades asignadas.',
+        'User not found':               'El usuario ya no existe.',
+    };
+
+    document.querySelectorAll<HTMLButtonElement>('[data-delete-user]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id   = btn.dataset.deleteUser;
+            const name = btn.dataset.userName ?? 'este usuario';
+            if (!id) return;
+
+            const ok = await askConfirm({
+                title:        'Eliminar usuario',
+                message:      `¿Seguro que quieres eliminar a ${name}? Esta acción no se puede deshacer.`,
+                confirmLabel: 'Eliminar',
+            });
+            if (!ok) return;
+
+            btn.disabled = true;
+            try {
+                const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    btn.closest('.user-row')?.remove();
+                    if (usersCount) usersCount.textContent = String(Math.max(0, Number(usersCount.textContent) - 1));
+                    return;
+                }
+                const data = await res.json().catch(() => ({})) as { error?: string };
+                alert((data.error && deleteErrors[data.error]) ?? 'No se pudo eliminar el usuario.');
+                btn.disabled = false;
+            } catch {
+                alert('Error de conexión. Inténtalo de nuevo.');
+                btn.disabled = false;
+            }
+        });
     });
 </script>
 
@@ -1042,7 +1126,8 @@ const propertyStatusLabel: Record<string, string> = {
     }
 
     .btn-secondary,
-    .btn-primary {
+    .btn-primary,
+    .btn-danger {
         flex: 1;
         font-family: var(--havre-font-sans);
         font-size: var(--havre-text-body);
@@ -1068,6 +1153,61 @@ const propertyStatusLabel: Record<string, string> = {
     }
 
     .btn-primary:hover { background: var(--havre-ink-700); }
+
+    .btn-danger {
+        background: var(--havre-error);
+        color: var(--havre-white);
+    }
+
+    .btn-danger:hover { filter: brightness(0.93); }
+
+    .confirm-modal {
+        width: min(92vw, 380px);
+        border: none;
+        border-radius: var(--havre-radius-2xl);
+        padding: 28px;
+        background: var(--havre-white);
+        box-shadow: var(--havre-shadow-xl);
+        color: var(--havre-ink-900);
+        text-align: center;
+    }
+
+    .confirm-modal::backdrop {
+        background: rgba(46, 42, 32, 0.45);
+        backdrop-filter: blur(2px);
+    }
+
+    .confirm-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 52px;
+        height: 52px;
+        margin: 0 auto 18px;
+        border-radius: var(--havre-radius-full);
+        background: var(--havre-error-soft);
+        color: var(--havre-error);
+    }
+
+    .confirm-title {
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-h3);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-900);
+        margin: 0 0 8px;
+    }
+
+    .confirm-message {
+        font-size: var(--havre-text-body);
+        color: var(--havre-ink-500);
+        line-height: var(--havre-leading-body);
+        margin: 0 0 24px;
+    }
+
+    .confirm-actions {
+        display: flex;
+        gap: 12px;
+    }
 
     .modal-field input[aria-invalid="true"] {
         border-color: var(--havre-error);

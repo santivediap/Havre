@@ -89,6 +89,9 @@ export const DELETE: APIRoute = async ({ params }) => {
         if (err?.code === '22P02') {
             return json({ error: 'Invalid ID' }, 400);
         }
+        if (err?.code === '23503') {
+            return json({ error: 'User has assigned properties' }, 409);
+        }
         console.error(err);
         return json({ error: 'Internal server error' }, 500);
     }
