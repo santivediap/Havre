@@ -331,4 +331,37 @@ import "../styles/global.css"
             &:hover { color: var(--havre-bronze-hover); }
         }
     }
+    @media (max-width: 749px) {
+        .login-layout {
+            grid-template-columns: 1fr;
+            grid-template-rows: auto 1fr;
+        }
+
+        .login-aside {
+            padding: 50px 28px 70px;
+            min-height: auto;
+        }
+
+        .aside-content {
+            margin-top: 50px;
+            margin-bottom: 0;
+        }
+
+        .aside-content blockquote p {
+            font-size: var(--havre-text-h3);
+        }
+
+        .login-panel {
+            padding: 40px 24px;
+            align-items: flex-start;
+        }
+
+        .login-form-wrapper {
+            max-width: none;
+        }
+
+        h1 {
+            font-size: var(--havre-text-h2);
+        }
+    }
 </style>
