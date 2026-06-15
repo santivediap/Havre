@@ -1,0 +1,334 @@
+---
+import ArrowRight from "../components/icons/ArrowRight.astro"
+import Lock from "../components/icons/Lock.astro"
+import "../styles/global.css"
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Acceder al panel | Havre</title>
+    <meta name="description" content="Acceso restringido al panel interno de Havre para gestión de propiedades y valoraciones.">
+</head>
+<body>
+
+    <main class="login-layout">
+        <aside class="login-aside" aria-label="Información del panel interno">
+            <header class="aside-header">
+                <a class="aside-logo" href="/">Havre</a>
+                <a class="aside-back" href="/"><ArrowRight/> volver al sitio</a>
+            </header>
+
+            <div class="aside-content">
+                <p class="aside-eyebrow">PANEL INTERNO</p>
+                <blockquote>
+                    <p>Detrás de cada havre hay un equipo que conoce el camino de tierra.</p>
+                </blockquote>
+            </div>
+        </aside>
+
+        <section class="login-panel" aria-label="Formulario de acceso al panel">
+            <div class="login-form-wrapper">
+
+                <p class="login-badge">
+                    <Lock />
+                    Acceso de administradores
+                </p>
+
+                <h1>Entra al panel</h1>
+                <p class="login-desc">Gestiona propiedades, valoraciones y el equipo de Havre. Esta zona es solo para personal autorizado.</p>
+
+                <form class="login-form" action="/api/login" method="POST" novalidate>
+
+                    <div class="form-field">
+                        <label for="email">Correo del equipo</label>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            placeholder="nombre@havre.com"
+                            autocomplete="email"
+                            required
+                        />
+                    </div>
+
+                    <div class="form-field">
+                        <div class="field-header">
+                            <label for="password">Contraseña</label>
+                            <a href="/forgot-password" class="forgot-link">¿La olvidaste?</a>
+                        </div>
+                        <div class="input-wrapper">
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                placeholder="Tu contraseña"
+                                autocomplete="current-password"
+                                required
+                            />
+                            <button type="button" class="toggle-password" aria-label="Mostrar u ocultar contraseña">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                                    <line x1="1" y1="1" x2="23" y2="23"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="submit-btn">Acceder al panel</button>
+
+                </form>
+
+                <p class="login-note">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                    <span>¿No tienes cuenta? El acceso lo gestiona el administrador. <a href="/contacto">Escríbenos</a>.</span>
+                </p>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
+
+<style>
+    body { margin: 0; }
+
+    .login-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        min-height: 100vh;
+    }
+
+    .login-aside {
+        display: flex;
+        flex-direction: column;
+        padding: 36px 44px;
+        background:
+        linear-gradient(rgba(46, 42, 32, 0.2) 0%, rgba(46, 42, 32, 0) 60%, rgba(46, 42, 32, .8) 100%),
+            repeating-linear-gradient(
+                115deg,
+                rgba(255, 255, 255, 0.04) 0 20px,
+                transparent                20px 40px
+            ),
+            #485228;
+    }
+
+    .aside-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .aside-logo {
+        font-family: var(--havre-font-serif);
+        font-weight: var(--havre-weight-bold);
+        font-size: var(--havre-text-h3);
+        color: var(--havre-white);
+    }
+
+    .aside-back {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-medium);
+        color: rgba(255, 255, 255, 0.6);
+        transition: color 0.1s ease;
+
+        svg {
+            rotate: 180deg;
+        }
+
+        &:hover { color: var(--havre-white); }
+    }
+
+    .aside-eyebrow {
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        letter-spacing: var(--havre-tracking-eyebrow);
+        color: rgba(255, 255, 255, 0.45);
+        margin: 0 0 20px;
+    }
+
+    .aside-content {
+        margin-top: auto;
+        margin-bottom: auto;
+    }
+
+    .aside-content blockquote {
+        margin: 0;
+        padding: 0;
+        border: none;
+
+        p {
+            font-family: var(--havre-font-serif);
+            font-style: italic;
+            font-size: calc(var(--havre-text-h1) * .9);
+            font-weight: var(--havre-weight-medium);
+            line-height: var(--havre-leading-heading);
+            color: var(--havre-white);
+            margin: 0;
+        }
+    }
+
+    .login-panel {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--havre-surface);
+        padding: 48px;
+    }
+
+    .login-form-wrapper {
+        width: 100%;
+        max-width: 500px;
+    }
+
+    .login-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: var(--havre-bronze-soft);
+        color: var(--havre-bronze-text);
+        font-size: var(--havre-text-label);
+        font-weight: var(--havre-weight-semibold);
+        border-radius: var(--havre-radius-full);
+        padding: 6px 14px;
+        margin: 0 0 20px;
+    }
+
+    h1 {
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-h1);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-900);
+        line-height: var(--havre-leading-heading);
+        margin: 0 0 10px;
+    }
+
+    .login-desc {
+        font-size: var(--havre-text-body);
+        color: var(--havre-ink-700);
+        line-height: var(--havre-leading-body);
+        margin: 0 0 28px;
+    }
+
+    .login-form {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .form-field label,
+    .field-header label {
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-700);
+    }
+
+    .field-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .forgot-link {
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-link);
+        transition: color 0.1s ease;
+
+        &:hover { color: var(--havre-bronze-hover); }
+    }
+
+    .form-field input[type="email"],
+    .form-field input[type="password"] {
+        width: 100%;
+        border: 1px solid var(--havre-border-input);
+        border-radius: var(--havre-radius-md);
+        padding: 11px 14px;
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-body);
+        color: var(--havre-ink-900);
+        background: var(--havre-white);
+        outline: none;
+        transition: border-color 0.12s ease, box-shadow 0.12s ease;
+
+        &::placeholder { color: var(--havre-ink-300); }
+
+        &:focus {
+            border-color: var(--havre-bronze-default);
+            box-shadow: 0 0 0 3px var(--havre-bronze-ring);
+        }
+    }
+
+    .input-wrapper {
+        position: relative;
+
+        input { padding-right: 44px; }
+    }
+
+    .toggle-password {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--havre-ink-300);
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.1s ease;
+
+        &:hover { color: var(--havre-ink-700); }
+    }
+
+    .submit-btn {
+        width: 100%;
+        background: var(--havre-bronze-default);
+        color: var(--havre-white);
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-body);
+        font-weight: var(--havre-weight-semibold);
+        border: none;
+        border-radius: var(--havre-radius-md);
+        padding: 14px;
+        cursor: pointer;
+        transition: background 0.12s ease;
+        margin-top: 4px;
+
+        &:hover { background: var(--havre-bronze-hover); }
+    }
+
+    .login-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin: 24px 0 0;
+        font-size: var(--havre-text-small);
+        color: var(--havre-ink-500);
+        line-height: var(--havre-leading-body);
+
+        svg { flex-shrink: 0; margin-top: 1px; }
+
+        a {
+            color: var(--havre-link);
+            font-weight: var(--havre-weight-semibold);
+
+            &:hover { color: var(--havre-bronze-hover); }
+        }
+    }
+</style>

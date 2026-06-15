@@ -15,7 +15,7 @@ const { pathname } = Astro.url
         </nav>
 
         <div class="right-header">
-            <a class="header-login" href="">Acceder</a>
+            <a class="header-login" href="login">Acceder</a>
             <a class={`cta-header${pathname === "/vender" ? " cta-header--active" : ""}`}
                href={pathname === "/vender" ? "/vender#valorar" : "/vender"}>
                 {pathname === "/vender" ? "Valorar mi casa" : "Vender mi casa"}
