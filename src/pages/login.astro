@@ -51,8 +51,10 @@ import "../styles/global.css"
                             name="email"
                             placeholder="nombre@havre.com"
                             autocomplete="email"
+                            aria-describedby="email-error"
                             required
                         />
+                        <p class="field-error" id="email-error" role="alert"></p>
                     </div>
 
                     <div class="form-field">
@@ -67,6 +69,7 @@ import "../styles/global.css"
                                 name="password"
                                 placeholder="Tu contraseña"
                                 autocomplete="current-password"
+                                aria-describedby="password-error"
                                 required
                             />
                             <button type="button" class="toggle-password" aria-label="Mostrar u ocultar contraseña">
@@ -76,7 +79,10 @@ import "../styles/global.css"
                                 </svg>
                             </button>
                         </div>
+                        <p class="field-error" id="password-error" role="alert"></p>
                     </div>
+
+                    <p class="form-error" id="form-error" role="alert"></p>
 
                     <button type="submit" class="submit-btn">Acceder al panel</button>
 
@@ -93,6 +99,90 @@ import "../styles/global.css"
     </main>
 </body>
 </html>
+
+<script>
+    const form          = document.querySelector<HTMLFormElement>('.login-form');
+    const emailInput    = document.querySelector<HTMLInputElement>('#email');
+    const passwordInput = document.querySelector<HTMLInputElement>('#password');
+    const emailError    = document.querySelector<HTMLParagraphElement>('#email-error');
+    const passwordError = document.querySelector<HTMLParagraphElement>('#password-error');
+    const formError     = document.querySelector<HTMLParagraphElement>('#form-error');
+    const submitBtn     = document.querySelector<HTMLButtonElement>('.submit-btn');
+    const toggleBtn     = document.querySelector<HTMLButtonElement>('.toggle-password');
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    const apiErrors: Record<string, string> = {
+        'Invalid credentials': 'Correo o contraseña incorrectos.',
+        'Account is disabled': 'Tu cuenta está desactivada. Contacta con el administrador.',
+    };
+
+    function setError(el: HTMLParagraphElement | null, input: HTMLInputElement | null, msg: string) {
+        if (el) el.textContent = msg;
+        if (input) input.setAttribute('aria-invalid', msg ? 'true' : 'false');
+    }
+    
+    toggleBtn?.addEventListener('click', () => {
+        if (!passwordInput) return;
+        passwordInput.type = passwordInput.type === 'password' ? 'text' : 'password';
+    });
+
+    form?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!emailInput || !passwordInput || !submitBtn) return;
+
+        if (formError) formError.textContent = '';
+
+        const email    = emailInput.value.trim();
+        const password = passwordInput.value;
+        let valid = true;
+
+        if (!email) {
+            setError(emailError, emailInput, 'Introduce tu correo.');
+            valid = false;
+        } else if (!emailRegex.test(email)) {
+            setError(emailError, emailInput, 'El correo no tiene un formato válido.');
+            valid = false;
+        } else {
+            setError(emailError, emailInput, '');
+        }
+
+        if (!password) {
+            setError(passwordError, passwordInput, 'Introduce tu contraseña.');
+            valid = false;
+        } else {
+            setError(passwordError, passwordInput, '');
+        }
+
+        if (!valid) return;
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Accediendo…';
+
+        try {
+            const res = await fetch('/api/login', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify({ email, password }),
+            });
+
+            if (res.ok) {
+                window.location.href = '/admin';
+                return;
+            }
+
+            const data = await res.json().catch(() => ({})) as { error?: string };
+            if (formError) {
+                formError.textContent = (data.error && apiErrors[data.error]) ?? 'No se pudo iniciar sesión. Inténtalo de nuevo.';
+            }
+        } catch {
+            if (formError) formError.textContent = 'Error de conexión. Inténtalo de nuevo.';
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Acceder al panel';
+        }
+    });
+</script>
 
 <style>
     body { margin: 0; }
@@ -252,7 +342,8 @@ import "../styles/global.css"
     }
 
     .form-field input[type="email"],
-    .form-field input[type="password"] {
+    .form-field input[type="password"],
+    .form-field input[type="text"] {
         width: 100%;
         border: 1px solid var(--havre-border-input);
         border-radius: var(--havre-radius-md);
@@ -270,6 +361,32 @@ import "../styles/global.css"
             border-color: var(--havre-bronze-default);
             box-shadow: 0 0 0 3px var(--havre-bronze-ring);
         }
+
+        &[aria-invalid="true"] {
+            border-color: var(--havre-error);
+            box-shadow: 0 0 0 3px var(--havre-error-soft);
+        }
+    }
+
+    .field-error {
+        font-size: var(--havre-text-small);
+        color: var(--havre-error);
+        margin: 0;
+
+        &:empty { display: none; }
+    }
+
+    .form-error {
+        border: 1px solid var(--havre-error);
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-medium);
+        color: var(--havre-error);
+        background: var(--havre-error-soft);
+        border-radius: var(--havre-radius-md);
+        padding: 11px 14px;
+        margin: 0;
+
+        &:empty { display: none; }
     }
 
     .input-wrapper {
