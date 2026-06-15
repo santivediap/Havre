@@ -139,7 +139,7 @@ const propertyStatusLabel: Record<string, string> = {
                                 <h2 id="users-heading">Usuarios del equipo</h2>
                                 <p>Da de alta, edita roles o retira el acceso de cada persona.</p>
                             </div>
-                            <button type="button" class="new-user-btn"><span aria-hidden="true">+</span> Nuevo usuario</button>
+                            <button type="button" class="new-user-btn" id="open-new-user"><span aria-hidden="true">+</span> Nuevo usuario</button>
                         </div>
 
                         <ul class="user-list" role="list">
@@ -270,6 +270,66 @@ const propertyStatusLabel: Record<string, string> = {
 
             </div>
         </div>
+
+        { isAdmin && (
+            <dialog class="modal" id="new-user-modal" aria-labelledby="nu-title">
+                <div class="modal-head">
+                    <div>
+                        <h2 id="nu-title">Nuevo usuario</h2>
+                    </div>
+                    <button type="button" class="modal-close" id="nu-close" aria-label="Cerrar">&times;</button>
+                </div>
+
+                <form class="modal-form" id="new-user-form" novalidate>
+                    <div class="avatar-upload">
+                        <span class="avatar avatar--lg avatar--olive" id="nu-avatar-preview" aria-hidden="true"></span>
+                        <div>
+                            <label class="upload-btn" for="nu-avatar">Subir foto</label>
+                            <input type="file" id="nu-avatar" name="avatar" accept="image/*" hidden />
+                            <p class="upload-hint">JPG o PNG · máx. 2 MB</p>
+                        </div>
+                    </div>
+
+                    <div class="modal-field">
+                        <label for="nu-name">Nombre completo</label>
+                        <input type="text" id="nu-name" name="name" placeholder="Nombre y apellidos" aria-describedby="nu-name-error" required />
+                        <p class="field-error" id="nu-name-error" role="alert"></p>
+                    </div>
+
+                    <div class="modal-field">
+                        <label for="nu-email">Correo</label>
+                        <input type="email" id="nu-email" name="email" placeholder="nombre@havre.com" autocomplete="off" aria-describedby="nu-email-error" required />
+                        <p class="field-error" id="nu-email-error" role="alert"></p>
+                    </div>
+
+                    <div class="modal-field">
+                        <label for="nu-phone">Teléfono <span class="field-optional">(opcional)</span></label>
+                        <input type="tel" id="nu-phone" name="phone" placeholder="+34 600 000 000" autocomplete="off" />
+                    </div>
+
+                    <div class="modal-field">
+                        <label for="nu-password">Contraseña</label>
+                        <input type="password" id="nu-password" name="password" placeholder="Mínimo 8 caracteres" autocomplete="new-password" aria-describedby="nu-password-error" required />
+                        <p class="field-error" id="nu-password-error" role="alert"></p>
+                    </div>
+
+                    <div class="modal-field">
+                        <label for="nu-role">Rol</label>
+                        <select id="nu-role" name="role">
+                            <option value="agent">Agente</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                    </div>
+
+                    <p class="form-error" id="nu-form-error" role="alert"></p>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" id="nu-cancel">Cancelar</button>
+                        <button type="submit" class="btn-primary">Crear</button>
+                    </div>
+                </form>
+            </dialog>
+        ) }
     </main>
 
 </body>
@@ -314,6 +374,118 @@ const propertyStatusLabel: Record<string, string> = {
             logoutBtn.disabled = false;
         } catch {
             logoutBtn.disabled = false;
+        }
+    });
+
+    // ── Modal: new user ─────────────────────────────────
+    const modal     = document.querySelector<HTMLDialogElement>('#new-user-modal');
+    const openBtn   = document.querySelector<HTMLButtonElement>('#open-new-user');
+    const closeBtn  = document.querySelector<HTMLButtonElement>('#nu-close');
+    const cancelBtn = document.querySelector<HTMLButtonElement>('#nu-cancel');
+    const fileInput = document.querySelector<HTMLInputElement>('#nu-avatar');
+    const preview   = document.querySelector<HTMLSpanElement>('#nu-avatar-preview');
+    const newUserForm = document.querySelector<HTMLFormElement>('#new-user-form');
+
+    openBtn?.addEventListener('click', () => modal?.showModal());
+    closeBtn?.addEventListener('click', () => modal?.close());
+    cancelBtn?.addEventListener('click', () => modal?.close());
+
+    modal?.addEventListener('click', (event) => {
+        if (event.target === modal) modal.close();
+    });
+
+    let previewUrl: string | null = null;
+    fileInput?.addEventListener('change', () => {
+        const file = fileInput.files?.[0];
+        if (!file || !preview) return;
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        previewUrl = URL.createObjectURL(file);
+        preview.style.backgroundImage = `url(${previewUrl})`;
+        preview.style.backgroundSize = 'cover';
+        preview.style.backgroundPosition = 'center';
+    });
+
+    const nameInput     = document.querySelector<HTMLInputElement>('#nu-name');
+    const emailInput    = document.querySelector<HTMLInputElement>('#nu-email');
+    const passwordInput = document.querySelector<HTMLInputElement>('#nu-password');
+    const nameError     = document.querySelector<HTMLParagraphElement>('#nu-name-error');
+    const emailError    = document.querySelector<HTMLParagraphElement>('#nu-email-error');
+    const passwordError = document.querySelector<HTMLParagraphElement>('#nu-password-error');
+    const nuFormError   = document.querySelector<HTMLParagraphElement>('#nu-form-error');
+    const submitBtn     = newUserForm?.querySelector<HTMLButtonElement>('.btn-primary');
+
+    const emailRe    = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const passwordRe = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+    const apiErrors: Record<string, string> = {
+        'Email already in use': 'Ya existe un usuario con ese correo.',
+        'Weak password':        'La contraseña no cumple los requisitos.',
+        'Invalid email format': 'El correo no tiene un formato válido.',
+        'Avatar must be an image': 'El archivo debe ser una imagen.',
+        'Avatar exceeds 2 MB':  'La imagen supera los 2 MB.',
+        'Could not upload avatar': 'No se pudo subir la imagen. Inténtalo de nuevo.',
+    };
+
+    function setFieldError(el: HTMLParagraphElement | null, input: HTMLInputElement | null, msg: string) {
+        if (el) el.textContent = msg;
+        if (input) input.setAttribute('aria-invalid', msg ? 'true' : 'false');
+    }
+
+    newUserForm?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!nameInput || !emailInput || !passwordInput || !submitBtn) return;
+
+        if (nuFormError) nuFormError.textContent = '';
+
+        const name     = nameInput.value.trim();
+        const email    = emailInput.value.trim();
+        const password = passwordInput.value;
+        let valid = true;
+
+        if (!name) {
+            setFieldError(nameError, nameInput, 'Introduce el nombre completo.');
+            valid = false;
+        } else setFieldError(nameError, nameInput, '');
+
+        if (!email) {
+            setFieldError(emailError, emailInput, 'Introduce el correo.');
+            valid = false;
+        } else if (!emailRe.test(email)) {
+            setFieldError(emailError, emailInput, 'El correo no tiene un formato válido.');
+            valid = false;
+        } else setFieldError(emailError, emailInput, '');
+
+        if (!password) {
+            setFieldError(passwordError, passwordInput, 'Introduce una contraseña.');
+            valid = false;
+        } else if (!passwordRe.test(password)) {
+            setFieldError(passwordError, passwordInput, 'Mínimo 8 caracteres, con mayúscula, minúscula y número.');
+            valid = false;
+        } else setFieldError(passwordError, passwordInput, '');
+
+        if (!valid) return;
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creando…';
+
+        try {
+            const formData = new FormData(newUserForm);
+            const res = await fetch('/api/users', { method: 'POST', body: formData });
+
+            if (res.ok) {
+                window.location.reload();
+                return;
+            }
+
+            const data = await res.json().catch(() => ({})) as { error?: string };
+            if (nuFormError) {
+                nuFormError.textContent = (data.error && apiErrors[data.error]) ?? 'No se pudo crear el usuario. Inténtalo de nuevo.';
+            }
+        } catch {
+            if (nuFormError) nuFormError.textContent = 'Error de conexión. Inténtalo de nuevo.';
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Crear';
         }
     });
 </script>
@@ -737,4 +909,188 @@ const propertyStatusLabel: Record<string, string> = {
     .badge--published { background: var(--havre-sage-soft);   color: var(--havre-success);     }
     .badge--draft     { background: var(--havre-bronze-soft); color: var(--havre-bronze-text); }
     .badge--archived  { background: var(--havre-chip-bg);     color: var(--havre-ink-500);     }
+
+    /* ─── Modal ──────────────────────────────────────────── */
+    .modal {
+        width: min(92vw, 440px);
+        border: none;
+        border-radius: var(--havre-radius-2xl);
+        padding: 28px;
+        background: var(--havre-white);
+        box-shadow: var(--havre-shadow-xl);
+        color: var(--havre-ink-900);
+    }
+
+    .modal::backdrop {
+        background: rgba(46, 42, 32, 0.45);
+        backdrop-filter: blur(2px);
+    }
+
+    .modal-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .modal-head h2 {
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-h3);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-900);
+        margin: 0;
+    }
+
+    .modal-close {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        font-size: 22px;
+        line-height: 1;
+        color: var(--havre-ink-500);
+        background: none;
+        border: none;
+        border-radius: var(--havre-radius-sm);
+        cursor: pointer;
+        transition: background 0.12s ease, color 0.12s ease;
+    }
+
+    .modal-close:hover {
+        background: var(--havre-surface);
+        color: var(--havre-ink-900);
+    }
+
+    .modal-form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .avatar-upload {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .upload-btn {
+        display: inline-block;
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-bronze-text);
+        background: var(--havre-bronze-soft);
+        border-radius: var(--havre-radius-md);
+        padding: 8px 16px;
+        cursor: pointer;
+        transition: background 0.12s ease;
+    }
+
+    .upload-btn:hover { background: var(--havre-papaya); }
+
+    .upload-hint {
+        font-size: var(--havre-text-label);
+        color: var(--havre-ink-300);
+        margin: 8px 0 0;
+    }
+
+    .modal-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .modal-field label {
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-700);
+    }
+
+    .field-optional {
+        font-weight: var(--havre-weight-regular);
+        color: var(--havre-ink-300);
+    }
+
+    .modal-field input,
+    .modal-field select {
+        width: 100%;
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-body);
+        color: var(--havre-ink-900);
+        background: var(--havre-white);
+        border: 1px solid var(--havre-border-input);
+        border-radius: var(--havre-radius-md);
+        padding: 11px 14px;
+        outline: none;
+        transition: border-color 0.12s ease, box-shadow 0.12s ease;
+    }
+
+    .modal-field input::placeholder { color: var(--havre-ink-300); }
+
+    .modal-field input:focus,
+    .modal-field select:focus {
+        border-color: var(--havre-bronze-default);
+        box-shadow: 0 0 0 3px var(--havre-bronze-ring);
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 8px;
+    }
+
+    .btn-secondary,
+    .btn-primary {
+        flex: 1;
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-body);
+        font-weight: var(--havre-weight-semibold);
+        border: none;
+        border-radius: var(--havre-radius-md);
+        padding: 13px;
+        cursor: pointer;
+        transition: background 0.12s ease;
+    }
+
+    .btn-secondary {
+        background: var(--havre-surface);
+        color: var(--havre-ink-900);
+        border: 1px solid var(--havre-border-card);
+    }
+
+    .btn-secondary:hover { background: var(--havre-papaya); }
+
+    .btn-primary {
+        background: var(--havre-ink-900);
+        color: var(--havre-cornsilk);
+    }
+
+    .btn-primary:hover { background: var(--havre-ink-700); }
+
+    .modal-field input[aria-invalid="true"] {
+        border-color: var(--havre-error);
+        box-shadow: 0 0 0 3px var(--havre-error-soft);
+    }
+
+    .field-error {
+        font-size: var(--havre-text-small);
+        color: var(--havre-error);
+        margin: 2px 0 0;
+    }
+
+    .field-error:empty { display: none; }
+
+    .form-error {
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-medium);
+        color: var(--havre-error);
+        background: var(--havre-error-soft);
+        border-radius: var(--havre-radius-md);
+        padding: 11px 14px;
+        margin: 0;
+    }
+
+    .form-error:empty { display: none; }
 </style>

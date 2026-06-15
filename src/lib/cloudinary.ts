@@ -1,0 +1,34 @@
+import { env } from 'cloudflare:workers';
+
+async function sha1(message: string): Promise<string> {
+    const buffer = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(message));
+    return [...new Uint8Array(buffer)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+export async function uploadAvatar(file: File): Promise<string> {
+    const timestamp      = Math.floor(Date.now() / 1000).toString();
+    const folder         = 'havre/avatars';
+    const transformation = 'c_fill,g_auto,h_400,w_400,f_webp';
+    const toSign    = `folder=${folder}&timestamp=${timestamp}&transformation=${transformation}`;
+    const signature = await sha1(toSign + env.CLOUDINARY_API_SECRET);
+
+    const form = new FormData();
+    form.append('file', file);
+    form.append('api_key', env.CLOUDINARY_API_KEY);
+    form.append('timestamp', timestamp);
+    form.append('folder', folder);
+    form.append('transformation', transformation);
+    form.append('signature', signature);
+
+    const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${env.CLOUDINARY_CLOUD_NAME}/image/upload`,
+        { method: 'POST', body: form },
+    );
+
+    if (!res.ok) {
+        throw new Error(`Cloudinary upload failed: ${await res.text()}`);
+    }
+
+    const data = await res.json() as { secure_url: string };
+    return data.secure_url;
+}

@@ -18,6 +18,7 @@ export function slugify(text: string): string {
 }
 
 export const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
 export const publicUserColumns = {
     id:            users.id,
