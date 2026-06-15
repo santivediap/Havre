@@ -18,8 +18,9 @@ import { sql } from 'drizzle-orm';
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
 export const userRoleEnum       = pgEnum('user_role',       ['admin', 'agent']);
-export const propertyTagEnum    = pgEnum('property_tag',    ['for_sale', 'new', 'reserved', 'sold']);
-export const propertyStatusEnum = pgEnum('property_status', ['draft', 'published', 'archived']);
+export const propertyTagEnum        = pgEnum('property_tag',          ['for_sale', 'new', 'reserved', 'sold']);
+export const propertyStatusEnum     = pgEnum('property_status',        ['draft', 'published', 'archived']);
+export const visitRequestStatusEnum = pgEnum('visit_request_status',   ['pending', 'contacted', 'closed']);
 
 // ─── Tables ───────────────────────────────────────────────────────────────────
 
@@ -73,6 +74,16 @@ export const propertyImages = pgTable('property_images', {
     caption:       varchar('caption', { length: 200 }),
     display_order: integer('display_order').notNull().default(0),
     is_cover:      boolean('is_cover').notNull().default(false),
+});
+
+export const visitRequests = pgTable('visit_requests', {
+    id:             serial('id').primaryKey(),
+    property_id:    uuid('property_id').notNull().references(() => properties.id, { onDelete: 'cascade' }),
+    name:           varchar('name',    { length: 100 }).notNull(),
+    contact:        varchar('contact', { length: 255 }).notNull(),
+    preferred_date: varchar('preferred_date', { length: 50 }),
+    status:         visitRequestStatusEnum('status').notNull().default('pending'),
+    created_at:     timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const users = pgTable('users', {
