@@ -1,13 +1,21 @@
 import type { APIRoute } from 'astro';
 import { db, users } from '../../../db';
 import bcrypt from 'bcryptjs';
+import { json, emailRegex, publicUserColumns } from './_shared';
 
-function json(data: unknown, status: number) {
-    return new Response(JSON.stringify(data), {
-        status,
-        headers: { 'Content-Type': 'application/json' },
-    });
-}
+export const GET: APIRoute = async () => {
+    try {
+        const list = await db
+            .select(publicUserColumns)
+            .from(users)
+            .orderBy(users.created_at);
+
+        return json({ users: list }, 200);
+    } catch (err) {
+        console.error(err);
+        return json({ error: 'Error interno del servidor' }, 500);
+    }
+};
 
 export const POST: APIRoute = async ({ request }) => {
     let body: Record<string, unknown>;
@@ -23,7 +31,6 @@ export const POST: APIRoute = async ({ request }) => {
         return json({ error: 'name, email y password son obligatorios' }, 400);
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(String(email))) {
         return json({ error: 'El formato del email no es válido' }, 400);
     }
