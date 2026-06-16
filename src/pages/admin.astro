@@ -228,7 +228,7 @@ const propertyStatusLabel: Record<string, string> = {
                             <h2 id="properties-heading">Propiedades</h2>
                             <p>El catálogo de fincas y casas de campo.</p>
                         </div>
-                        <button type="button" class="new-user-btn"><span aria-hidden="true">+</span> Nueva propiedad</button>
+                        <button type="button" class="new-user-btn" id="open-new-property"><span aria-hidden="true">+</span> Nueva propiedad</button>
                     </div>
 
                     <ul class="user-list" role="list">
@@ -400,6 +400,136 @@ const propertyStatusLabel: Record<string, string> = {
 
                 <div class="modal-actions">
                     <button type="button" class="btn-secondary" id="nz-cancel">Cancelar</button>
+                    <button type="submit" class="btn-primary">Crear</button>
+                </div>
+            </form>
+        </dialog>
+
+        <dialog class="modal" id="new-property-modal" aria-labelledby="np-title">
+            <div class="modal-head">
+                <div>
+                    <h2>Nueva propiedad</h2>
+                </div>
+                <button type="button" class="modal-close" id="np-close" aria-label="Cerrar">&times;</button>
+            </div>
+
+            <form class="modal-form" id="new-property-form" novalidate>
+                <div class="modal-field">
+                    <label for="np-title">Título</label>
+                    <input type="text" id="np-title" name="title" placeholder="Masía entre olivares" aria-describedby="np-title-error" required />
+                    <p class="field-error" id="np-title-error" role="alert"></p>
+                </div>
+
+                <div class="modal-field">
+                    <label for="np-zone">Zona</label>
+                    <select id="np-zone" name="zone_id">
+                        { zonesList.map(zone => (
+                            <option value={zone.id}>{zone.name} · {zone.country}</option>
+                        )) }
+                    </select>
+                </div>
+
+                { isAdmin && (
+                    <div class="modal-field">
+                        <label for="np-agent">Asesor responsable</label>
+                        <select id="np-agent" name="agent_id">
+                            { usersList.map(user => (
+                                <option value={user.id} selected={user.id === me.id}>{user.name}</option>
+                            )) }
+                        </select>
+                    </div>
+                ) }
+
+                <div class="modal-field">
+                    <label for="np-price">Precio (€)</label>
+                    <input type="number" id="np-price" name="price" min="0" placeholder="685000" aria-describedby="np-price-error" required />
+                    <p class="field-error" id="np-price-error" role="alert"></p>
+                </div>
+
+                <div class="modal-row">
+                    <div class="modal-field">
+                        <label for="np-beds">Habitaciones</label>
+                        <input type="number" id="np-beds" name="n_beds" min="0" placeholder="4" required />
+                    </div>
+                    <div class="modal-field">
+                        <label for="np-baths">Baños</label>
+                        <input type="number" id="np-baths" name="n_baths" min="0" placeholder="2" required />
+                    </div>
+                </div>
+
+                <div class="modal-row">
+                    <div class="modal-field">
+                        <label for="np-built">Construidos (m²)</label>
+                        <input type="number" id="np-built" name="m_built" min="0" placeholder="320" required />
+                    </div>
+                    <div class="modal-field">
+                        <label for="np-terrain">Terreno (ha) <span class="field-optional">(opcional)</span></label>
+                        <input type="number" id="np-terrain" name="terrain_space" min="0" step="0.01" placeholder="1.2" />
+                    </div>
+                </div>
+
+                <div class="modal-row">
+                    <div class="modal-field">
+                        <label for="np-tag">Etiqueta</label>
+                        <select id="np-tag" name="tag">
+                            <option value="for_sale">En venta</option>
+                            <option value="new">Nuevo</option>
+                            <option value="reserved">Reservado</option>
+                            <option value="sold">Vendido</option>
+                        </select>
+                    </div>
+                    <div class="modal-field">
+                        <label for="np-status">Estado</label>
+                        <select id="np-status" name="status">
+                            <option value="draft">Borrador</option>
+                            <option value="published">Publicado</option>
+                            <option value="archived">Archivado</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-field">
+                    <label for="np-description">Descripción <span class="field-optional">(opcional)</span></label>
+                    <textarea id="np-description" name="description" rows="3" placeholder="Entre suaves colinas plantadas de olivos centenarios..."></textarea>
+                </div>
+
+                <div class="modal-field">
+                    <label for="np-features">Características <span class="field-optional">(separadas por comas)</span></label>
+                    <input type="text" id="np-features" name="features" placeholder="Piscina, Chimenea de leña, Pozo de agua" autocomplete="off" />
+                </div>
+
+                <div class="modal-field">
+                    <label for="np-distances">Distancias <span class="field-optional">(una por línea: valor unidad etiqueta)</span></label>
+                    <textarea id="np-distances" name="distances" rows="3" placeholder="4 km al pueblo&#10;18 km a Siena&#10;35 min al aeropuerto"></textarea>
+                </div>
+
+                <div class="modal-row">
+                    <div class="modal-field">
+                        <label for="np-lat">Latitud <span class="field-optional">(opcional)</span></label>
+                        <input type="number" id="np-lat" name="latitude" step="any" placeholder="43.318" />
+                    </div>
+                    <div class="modal-field">
+                        <label for="np-lng">Longitud <span class="field-optional">(opcional)</span></label>
+                        <input type="number" id="np-lng" name="longitude" step="any" placeholder="11.330" />
+                    </div>
+                </div>
+
+                <label class="check-field">
+                    <input type="checkbox" id="np-featured" name="is_featured" value="true" />
+                    <span>Destacar en portada</span>
+                </label>
+
+                <div class="modal-field photo-manager">
+                    <label>Fotos <span class="field-optional">(máx. 10 · arrastra para reordenar, la primera es la portada)</span></label>
+                    <label class="upload-btn" for="np-photos" id="np-photos-label">Subir fotos</label>
+                    <input type="file" id="np-photos" accept="image/*" multiple hidden />
+                    <ul class="photo-list" id="np-photo-list"></ul>
+                </div>
+
+                <p class="form-error" id="np-form-error" role="alert"></p>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="np-cancel">Cancelar</button>
                     <button type="submit" class="btn-primary">Crear</button>
                 </div>
             </form>
@@ -889,6 +1019,239 @@ const propertyStatusLabel: Record<string, string> = {
             }
         });
     });
+
+    // ── Modal: new property ──────────────────────────────────
+    const propModal     = document.querySelector<HTMLDialogElement>('#new-property-modal');
+    const openPropBtn   = document.querySelector<HTMLButtonElement>('#open-new-property');
+    const propCloseBtn  = document.querySelector<HTMLButtonElement>('#np-close');
+    const propCancelBtn = document.querySelector<HTMLButtonElement>('#np-cancel');
+    const propForm      = document.querySelector<HTMLFormElement>('#new-property-form');
+    const propTitleInput = document.querySelector<HTMLInputElement>('#np-title');
+    const propZoneSelect = document.querySelector<HTMLSelectElement>('#np-zone');
+    const propPriceInput = document.querySelector<HTMLInputElement>('#np-price');
+    const propBedsInput  = document.querySelector<HTMLInputElement>('#np-beds');
+    const propBathsInput = document.querySelector<HTMLInputElement>('#np-baths');
+    const propBuiltInput = document.querySelector<HTMLInputElement>('#np-built');
+    const propTitleError = document.querySelector<HTMLParagraphElement>('#np-title-error');
+    const propPriceError = document.querySelector<HTMLParagraphElement>('#np-price-error');
+    const propFormError  = document.querySelector<HTMLParagraphElement>('#np-form-error');
+    const propSubmitBtn  = propForm?.querySelector<HTMLButtonElement>('.btn-primary');
+
+    const propApiErrors: Record<string, string> = {
+        'Zone not found': 'La zona seleccionada no existe.',
+        'A property can have at most 10 photos': 'Una propiedad puede tener como máximo 10 fotos.',
+        'All photos must be images': 'Todos los archivos deben ser imágenes.',
+        'Each photo must be under 5 MB': 'Cada foto debe pesar menos de 5 MB.',
+        'Could not upload photos': 'No se pudieron subir las fotos. Inténtalo de nuevo.',
+    };
+
+    // ── In-modal photo manager (in memory until the property is created) ──
+    const PROP_MAX_PHOTOS = 10;
+    const propPhotosInput = document.querySelector<HTMLInputElement>('#np-photos');
+    const propPhotosLabel = document.querySelector<HTMLLabelElement>('#np-photos-label');
+    const propPhotoList   = document.querySelector<HTMLUListElement>('#np-photo-list');
+
+    interface PropPhoto { file: File; url: string; caption: string; }
+    let propPhotos: PropPhoto[] = [];
+    let draggedPhoto: HTMLLIElement | null = null;
+
+    function renderPropPhotos() {
+        if (!propPhotoList) return;
+        propPhotoList.innerHTML = '';
+        propPhotos.forEach((photo, i) => {
+            const li = document.createElement('li');
+            li.className = 'photo-row';
+            li.draggable = false;
+            li.dataset.index = String(i);
+
+            // Drag handle (grip): dragging is only enabled while grabbing it.
+            const handle = document.createElement('span');
+            handle.className = 'photo-handle';
+            handle.setAttribute('aria-hidden', 'true');
+            handle.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
+            handle.addEventListener('mousedown', () => { li.draggable = true; });
+
+            const thumb = document.createElement('span');
+            thumb.className = 'photo-thumb';
+            thumb.style.backgroundImage = `url(${photo.url})`;
+            if (i === 0) thumb.dataset.cover = 'true';
+
+            const caption = document.createElement('input');
+            caption.type = 'text';
+            caption.className = 'photo-caption-input';
+            caption.placeholder = 'Pie de foto (opcional)';
+            caption.value = photo.caption;
+            caption.addEventListener('input', () => { photo.caption = caption.value; });
+
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'photo-remove-btn';
+            remove.setAttribute('aria-label', 'Quitar foto');
+            remove.textContent = '×';
+            remove.addEventListener('click', () => {
+                URL.revokeObjectURL(photo.url);
+                propPhotos.splice(i, 1);
+                renderPropPhotos();
+            });
+
+            li.append(handle, thumb, caption, remove);
+            propPhotoList.appendChild(li);
+        });
+    }
+
+    function clearPropPhotos() {
+        propPhotos.forEach(p => URL.revokeObjectURL(p.url));
+        propPhotos = [];
+        renderPropPhotos();
+    }
+
+    propPhotosInput?.addEventListener('change', () => {
+        const incoming = Array.from(propPhotosInput.files ?? []);
+        for (const file of incoming) {
+            if (propPhotos.length >= PROP_MAX_PHOTOS) break;
+            propPhotos.push({ file, url: URL.createObjectURL(file), caption: '' });
+        }
+        propPhotosInput.value = '';
+        renderPropPhotos();
+    });
+
+    // Drag & drop reordering (the first photo becomes the cover).
+    function getPhotoAfter(y: number): HTMLElement | null {
+        if (!propPhotoList) return null;
+        const items = [...propPhotoList.querySelectorAll<HTMLElement>('.photo-row:not(.dragging)')];
+        let closest: { offset: number; element: HTMLElement | null } = { offset: -Infinity, element: null };
+        for (const child of items) {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) closest = { offset, element: child };
+        }
+        return closest.element;
+    }
+
+    propPhotoList?.addEventListener('dragstart', (event) => {
+        const li = (event.target as HTMLElement).closest('.photo-row') as HTMLLIElement | null;
+        if (!li) return;
+        draggedPhoto = li;
+        li.classList.add('dragging');
+    });
+
+    propPhotoList?.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        if (!propPhotoList || !draggedPhoto) return;
+        const after = getPhotoAfter(event.clientY);
+        if (after == null) propPhotoList.appendChild(draggedPhoto);
+        else propPhotoList.insertBefore(draggedPhoto, after);
+    });
+
+    propPhotoList?.addEventListener('dragend', () => {
+        if (!draggedPhoto) return;
+        draggedPhoto.classList.remove('dragging');
+        draggedPhoto.draggable = false;
+        draggedPhoto = null;
+        // Reorder the state array to match the new DOM order.
+        const order = [...(propPhotoList?.querySelectorAll<HTMLLIElement>('.photo-row') ?? [])]
+            .map(li => Number(li.dataset.index));
+        propPhotos = order.map(i => propPhotos[i]);
+        renderPropPhotos();
+    });
+
+    openPropBtn?.addEventListener('click', () => {
+        propForm?.reset();
+        clearPropPhotos();
+        if (propPhotosLabel) propPhotosLabel.textContent = 'Subir fotos';
+        if (propTitleError) propTitleError.textContent = '';
+        if (propPriceError) propPriceError.textContent = '';
+        if (propFormError)  propFormError.textContent = '';
+        propModal?.showModal();
+    });
+    propCloseBtn?.addEventListener('click', () => propModal?.close());
+    propCancelBtn?.addEventListener('click', () => propModal?.close());
+    propModal?.addEventListener('click', (event) => {
+        if (event.target === propModal) propModal.close();
+    });
+
+    // Marks a numeric field invalid when empty or below its minimum.
+    function validateNumber(input: HTMLInputElement | null, min: number): boolean {
+        if (!input) return true;
+        const ok = input.value !== '' && Number(input.value) >= min;
+        input.setAttribute('aria-invalid', ok ? 'false' : 'true');
+        return ok;
+    }
+
+    propForm?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        console.log(propTitleInput);
+        console.log(propPriceInput);
+        console.log(propSubmitBtn);
+        
+
+        if (!propTitleInput || !propPriceInput || !propSubmitBtn) return;
+
+        if (propFormError) propFormError.textContent = '';
+        let valid = true;
+
+        if (!propTitleInput.value.trim()) {
+            if (propTitleError) propTitleError.textContent = 'Introduce el título.';
+            propTitleInput.setAttribute('aria-invalid', 'true');
+            valid = false;
+        } else { if (propTitleError) propTitleError.textContent = ''; propTitleInput.setAttribute('aria-invalid', 'false'); }
+
+        // Zone: there must be a selectable option.
+        if (!propZoneSelect?.value) {
+            propZoneSelect?.setAttribute('aria-invalid', 'true');
+            if (propFormError) propFormError.textContent = 'Selecciona una zona (crea una antes si no hay ninguna).';
+            valid = false;
+        } else { propZoneSelect.setAttribute('aria-invalid', 'false'); }
+
+        if (!propPriceInput.value || Number(propPriceInput.value) <= 0) {
+            if (propPriceError) propPriceError.textContent = 'Introduce un precio válido.';
+            propPriceInput.setAttribute('aria-invalid', 'true');
+            valid = false;
+        } else { if (propPriceError) propPriceError.textContent = ''; propPriceInput.setAttribute('aria-invalid', 'false'); }
+
+        // Required integers (≥ 0 for rooms/baths, ≥ 1 for built area).
+        const numbersOk = [
+            validateNumber(propBedsInput, 0),
+            validateNumber(propBathsInput, 0),
+            validateNumber(propBuiltInput, 1),
+        ].every(Boolean);
+        if (!numbersOk) {
+            if (propFormError && !propFormError.textContent) {
+                propFormError.textContent = 'Revisa habitaciones, baños y metros construidos.';
+            }
+            valid = false;
+        }
+
+        if (!valid) return;
+
+        propSubmitBtn.disabled = true;
+        propSubmitBtn.textContent = 'Creando…';
+
+        try {
+            const formData = new FormData(propForm);
+            // Append photos and captions in their current (drag-ordered) order.
+            propPhotos.forEach(photo => {
+                formData.append('photos', photo.file);
+                formData.append('captions', photo.caption);
+            });
+
+            const res = await fetch('/api/properties', { method: 'POST', body: formData });
+            if (res.ok) {
+                window.location.reload();
+                return;
+            }
+            const data = await res.json().catch(() => ({})) as { error?: string };
+            if (propFormError) {
+                propFormError.textContent = (data.error && propApiErrors[data.error]) ?? 'No se pudo crear la propiedad. Inténtalo de nuevo.';
+            }
+        } catch {
+            if (propFormError) propFormError.textContent = 'Error de conexión. Inténtalo de nuevo.';
+        } finally {
+            propSubmitBtn.disabled = false;
+            propSubmitBtn.textContent = 'Crear';
+        }
+    });
+
 </script>
 
 <style>
@@ -1390,6 +1753,45 @@ const propertyStatusLabel: Record<string, string> = {
         background-position: center;
     }
 
+    .modal-row {
+        display: flex;
+        gap: 12px;
+    }
+
+    .modal-row .modal-field {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .check-field {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-700);
+        cursor: pointer;
+    }
+
+    .check-field input {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--havre-bronze-default);
+        cursor: pointer;
+    }
+
+    /* ─── In-modal photo manager ─────────────────────────── */
+    .photo-manager .upload-btn { align-self: flex-start; }
+
+    .photo-list {
+        list-style: none;
+        margin: 8px 0 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
     .modal-actions {
         display: flex;
         gap: 12px;
@@ -1480,7 +1882,8 @@ const propertyStatusLabel: Record<string, string> = {
         gap: 12px;
     }
 
-    .modal-field input[aria-invalid="true"] {
+    .modal-field input[aria-invalid="true"],
+    .modal-field select[aria-invalid="true"] {
         border-color: var(--havre-error);
         box-shadow: 0 0 0 3px var(--havre-error-soft);
     }
@@ -1504,4 +1907,95 @@ const propertyStatusLabel: Record<string, string> = {
     }
 
     .form-error:empty { display: none; }
+</style>
+
+<!-- Photo rows are created at runtime via JS, so their styles must be global
+     (Astro's scoped styles only apply to elements present in the template). -->
+<style is:global>
+    .photo-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: none;
+    }
+
+    .photo-row.dragging { opacity: 0.4; }
+
+    .photo-handle {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 35px;
+        border-radius: var(--havre-radius-sm);
+        background: var(--havre-sage-soft);
+        color: var(--havre-ink-500);
+        cursor: grab;
+    }
+
+    .photo-row.dragging .photo-handle { cursor: grabbing; }
+
+    .photo-thumb {
+        position: relative;
+        flex-shrink: 0;
+        width: 110px;
+        height: 72px;
+        border-radius: var(--havre-radius-md);
+        background-size: cover;
+        background-position: center;
+        background-color: var(--havre-surface);
+    }
+
+    .photo-thumb[data-cover]::after {
+        content: "Portada";
+        position: absolute;
+        left: 4px;
+        bottom: 4px;
+        font-size: 9px;
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-white);
+        background: rgba(46, 42, 32, 0.7);
+        border-radius: var(--havre-radius-sm);
+        padding: 1px 5px;
+    }
+
+    .photo-caption-input {
+        flex: 1;
+        min-width: 0;
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-body);
+        color: var(--havre-ink-900);
+        background: var(--havre-white);
+        border: 1px solid var(--havre-border-input);
+        border-radius: var(--havre-radius-md);
+        padding: 14px 16px;
+        outline: none;
+    }
+
+    .photo-caption-input::placeholder { color: var(--havre-ink-300); }
+
+    .photo-caption-input:focus {
+        border-color: var(--havre-bronze-default);
+        box-shadow: 0 0 0 3px var(--havre-bronze-ring);
+    }
+
+    .photo-remove-btn {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        font-size: 24px;
+        line-height: 1;
+        color: var(--havre-white);
+        background: var(--havre-bronze-default);
+        border: none;
+        border-radius: var(--havre-radius-md);
+        cursor: pointer;
+        transition: background 0.12s ease;
+    }
+
+    .photo-remove-btn:hover { background: var(--havre-bronze-hover); }
 </style>

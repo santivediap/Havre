@@ -38,3 +38,7 @@ export function uploadAvatar(file: File): Promise<string> {
 export function uploadZoneImage(file: File): Promise<string> {
     return upload(file, 'havre/zones', 'c_fill,g_auto,h_800,w_1200,f_webp');
 }
+
+export function uploadPropertyImage(file: File): Promise<string> {
+    return upload(file, 'havre/properties', 'c_fill,g_auto,h_1067,w_1600,f_webp');
+}
