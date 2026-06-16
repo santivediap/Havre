@@ -2035,7 +2035,6 @@ const propertyStatusLabel: Record<string, string> = {
     .form-error:empty { display: none; }
 
     /* ─── Responsive ─────────────────────────────────────── */
-    /* Stack the sidebar above the panels and lay its nav out horizontally. */
     @media (max-width: 880px) {
         .admin {
             padding: 24px 20px 64px;
@@ -2079,9 +2078,7 @@ const propertyStatusLabel: Record<string, string> = {
         }
     }
 
-    /* Wrap each row so the meta columns drop to a second line, and stack
-       the paired modal fields. */
-    @media (max-width: 600px) {
+    @media (max-width: 720px) {
         .profile-card {
             padding: 20px;
             gap: 16px;
@@ -2107,6 +2104,10 @@ const propertyStatusLabel: Record<string, string> = {
             flex-wrap: wrap;
             row-gap: 14px;
         }
+        
+        .user-identity {
+            flex: 1 1 35%;
+        }
 
         .user-name {
             flex-wrap: wrap;
@@ -2115,8 +2116,8 @@ const propertyStatusLabel: Record<string, string> = {
 
         .user-meta {
             order: 1;
+            flex: 1 1 45%;
             width: auto;
-            flex: 1;
             align-items: flex-start;
             text-align: left;
         }
@@ -2222,7 +2223,6 @@ const propertyStatusLabel: Record<string, string> = {
 
     .photo-remove-btn:hover { background: var(--havre-bronze-hover); }
 
-    /* On narrow modals, drop the caption to its own line and shrink the thumb. */
     @media (max-width: 480px) {
         .photo-row {
             flex-wrap: wrap;
