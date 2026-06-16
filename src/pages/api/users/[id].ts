@@ -38,10 +38,12 @@ export const PATCH: APIRoute = async ({ params, request }) => {
         const role  = form.get('role');
         const password = form.get('password');
         const avatar   = form.get('avatar');
+        const isActive = form.get('is_active');
 
         if (name)  values.name = String(name);
         if (role)  values.role = role === 'admin' ? 'admin' : 'agent';
         if (phone !== null) values.phone = phone ? String(phone) : null;
+        if (isActive !== null) values.is_active = isActive === 'true';
 
         if (email) {
             if (!emailRegex.test(String(email))) {

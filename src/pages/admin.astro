@@ -154,6 +154,8 @@ const propertyStatusLabel: Record<string, string> = {
                                                 data-email={user.email}
                                                 data-phone={user.phone ?? ''}
                                                 data-role={user.role}
+                                                data-active={String(user.is_active)}
+                                                data-self={user.id === me.id ? 'true' : 'false'}
                                                 data-avatar={user.avatar_url ?? ''}
                                                 aria-label={`Editar ${user.name}`}><Edit /></button>
                                             { user.id !== me.id && (
@@ -302,6 +304,14 @@ const propertyStatusLabel: Record<string, string> = {
                         <select id="nu-role" name="role">
                             <option value="agent">Agente</option>
                             <option value="admin">Administrador</option>
+                        </select>
+                    </div>
+
+                    <div class="modal-field" id="nu-status-field" hidden>
+                        <label for="nu-status">Estado</label>
+                        <select id="nu-status" name="is_active">
+                            <option value="true">Activo</option>
+                            <option value="false">Inactivo</option>
                         </select>
                     </div>
 
@@ -492,6 +502,8 @@ const propertyStatusLabel: Record<string, string> = {
     const submitBtn     = newUserForm?.querySelector<HTMLButtonElement>('.btn-primary');
     const phoneInput    = document.querySelector<HTMLInputElement>('#nu-phone');
     const roleSelect    = document.querySelector<HTMLSelectElement>('#nu-role');
+    const statusField   = document.querySelector<HTMLDivElement>('#nu-status-field');
+    const statusSelect  = document.querySelector<HTMLSelectElement>('#nu-status');
     const modalTitle    = document.querySelector<HTMLElement>('#nu-title');
 
     let editingUserId: string | null = null;
@@ -506,9 +518,15 @@ const propertyStatusLabel: Record<string, string> = {
         if (preview) preview.style.backgroundImage = '';
     }
 
+    function showStatusField(show: boolean) {
+        if (statusField) statusField.hidden = !show;
+        if (statusSelect) statusSelect.disabled = !show;
+    }
+
     function openCreate() {
         editingUserId = null;
         resetUserForm();
+        showStatusField(false);
         if (modalTitle) modalTitle.textContent = 'Nuevo usuario';
         if (passwordInput) {
             passwordInput.required = true;
@@ -526,6 +544,10 @@ const propertyStatusLabel: Record<string, string> = {
         if (emailInput) emailInput.value = btn.dataset.email ?? '';
         if (phoneInput) phoneInput.value = btn.dataset.phone ?? '';
         if (roleSelect) roleSelect.value = btn.dataset.role  ?? 'agent';
+        
+        const isSelf = btn.dataset.self === 'true';
+        showStatusField(!isSelf);
+        if (statusSelect) statusSelect.value = btn.dataset.active ?? 'true';
         if (passwordInput) {
             passwordInput.required = false;
             passwordInput.placeholder = 'Dejar en blanco para no cambiarla';
