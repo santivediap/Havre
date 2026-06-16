@@ -1,5 +1,6 @@
-import { eq, desc } from 'drizzle-orm';
+import { eq, and, asc, desc, notInArray } from 'drizzle-orm';
 import { db, properties, propertyImages, zones, users } from '../db';
+import { deleteImage } from '../lib/cloudinary';
 
 export interface NewProperty {
     zone_id:        number;
@@ -25,6 +26,75 @@ export interface NewProperty {
 export async function createProperty(data: NewProperty) {
     const [property] = await db.insert(properties).values(data).returning();
     return property;
+}
+
+export async function getPropertyById(id: string) {
+    const [property] = await db.select().from(properties).where(eq(properties.id, id));
+    return property ?? null;
+}
+
+export async function getPropertyImages(propertyId: string) {
+    return db
+        .select()
+        .from(propertyImages)
+        .where(eq(propertyImages.property_id, propertyId))
+        .orderBy(asc(propertyImages.display_order));
+}
+
+export async function updateProperty(id: string, data: Record<string, unknown>) {
+    const [property] = await db
+        .update(properties)
+        .set({ ...data, updated_at: new Date() })
+        .where(eq(properties.id, id))
+        .returning();
+    return property ?? null;
+}
+
+// Reconcile a property's gallery to match the desired ordered list.
+// Each item is an existing image (by id) or a freshly uploaded one (url);
+// the first item becomes the cover. Removed existing images are deleted.
+export async function syncPropertyImages(
+    propertyId: string,
+    items: { existingId?: number; url?: string; caption: string | null }[],
+) {
+    const keptIds = items.map(i => i.existingId).filter((id): id is number => typeof id === 'number');
+
+    // Find the images about to be removed so we can also delete them from Cloudinary.
+    const removeWhere = keptIds.length
+        ? and(eq(propertyImages.property_id, propertyId), notInArray(propertyImages.id, keptIds))
+        : eq(propertyImages.property_id, propertyId);
+
+    const removed = await db
+        .select({ url: propertyImages.url })
+        .from(propertyImages)
+        .where(removeWhere);
+
+    await db.delete(propertyImages).where(removeWhere);
+
+    // Best-effort cleanup of the orphaned Cloudinary assets.
+    await Promise.allSettled(removed.map(img => deleteImage(img.url)));
+
+    // Apply order/cover/caption: update kept images, insert new ones.
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.existingId) {
+            await db
+                .update(propertyImages)
+                .set({ display_order: i, is_cover: i === 0, caption: item.caption })
+                .where(and(
+                    eq(propertyImages.id, item.existingId),
+                    eq(propertyImages.property_id, propertyId),
+                ));
+        } else if (item.url) {
+            await db.insert(propertyImages).values({
+                property_id:   propertyId,
+                url:           item.url,
+                caption:       item.caption,
+                display_order: i,
+                is_cover:      i === 0,
+            });
+        }
+    }
 }
 
 // Insert a property's images in order; the first one is the cover.

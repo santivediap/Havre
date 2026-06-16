@@ -256,7 +256,7 @@ const propertyStatusLabel: Record<string, string> = {
                                 </div>
 
                                 <div class="user-actions">
-                                    <button type="button" class="icon-btn" aria-label={`Editar ${property.title}`}><Edit /></button>
+                                    <button type="button" class="icon-btn" data-edit-property={property.id} aria-label={`Editar ${property.title}`}><Edit /></button>
                                     <button type="button" class="icon-btn icon-btn--danger" aria-label={`Eliminar ${property.title}`}><Trash /></button>
                                 </div>
                             </li>
@@ -1026,16 +1026,29 @@ const propertyStatusLabel: Record<string, string> = {
     const propCloseBtn  = document.querySelector<HTMLButtonElement>('#np-close');
     const propCancelBtn = document.querySelector<HTMLButtonElement>('#np-cancel');
     const propForm      = document.querySelector<HTMLFormElement>('#new-property-form');
+    const propModalTitle = document.querySelector<HTMLElement>('#np-title');
     const propTitleInput = document.querySelector<HTMLInputElement>('#np-title');
     const propZoneSelect = document.querySelector<HTMLSelectElement>('#np-zone');
+    const propAgentSelect = document.querySelector<HTMLSelectElement>('#np-agent');
     const propPriceInput = document.querySelector<HTMLInputElement>('#np-price');
     const propBedsInput  = document.querySelector<HTMLInputElement>('#np-beds');
     const propBathsInput = document.querySelector<HTMLInputElement>('#np-baths');
     const propBuiltInput = document.querySelector<HTMLInputElement>('#np-built');
+    const propTerrainInput = document.querySelector<HTMLInputElement>('#np-terrain');
+    const propTagSelect    = document.querySelector<HTMLSelectElement>('#np-tag');
+    const propStatusSelect = document.querySelector<HTMLSelectElement>('#np-status');
+    const propDescInput     = document.querySelector<HTMLTextAreaElement>('#np-description');
+    const propFeaturesInput = document.querySelector<HTMLInputElement>('#np-features');
+    const propDistancesInput = document.querySelector<HTMLTextAreaElement>('#np-distances');
+    const propLatInput  = document.querySelector<HTMLInputElement>('#np-lat');
+    const propLngInput  = document.querySelector<HTMLInputElement>('#np-lng');
+    const propFeaturedInput = document.querySelector<HTMLInputElement>('#np-featured');
     const propTitleError = document.querySelector<HTMLParagraphElement>('#np-title-error');
     const propPriceError = document.querySelector<HTMLParagraphElement>('#np-price-error');
     const propFormError  = document.querySelector<HTMLParagraphElement>('#np-form-error');
     const propSubmitBtn  = propForm?.querySelector<HTMLButtonElement>('.btn-primary');
+
+    let editingPropertyId: string | null = null;
 
     const propApiErrors: Record<string, string> = {
         'Zone not found': 'La zona seleccionada no existe.',
@@ -1051,7 +1064,8 @@ const propertyStatusLabel: Record<string, string> = {
     const propPhotosLabel = document.querySelector<HTMLLabelElement>('#np-photos-label');
     const propPhotoList   = document.querySelector<HTMLUListElement>('#np-photo-list');
 
-    interface PropPhoto { file: File; url: string; caption: string; }
+    // `file` for newly added photos, `existingId` for ones already stored.
+    interface PropPhoto { file?: File; url: string; caption: string; existingId?: number; }
     let propPhotos: PropPhoto[] = [];
     let draggedPhoto: HTMLLIElement | null = null;
 
@@ -1155,14 +1169,70 @@ const propertyStatusLabel: Record<string, string> = {
         renderPropPhotos();
     });
 
-    openPropBtn?.addEventListener('click', () => {
+    function resetPropForm() {
         propForm?.reset();
         clearPropPhotos();
         if (propPhotosLabel) propPhotosLabel.textContent = 'Subir fotos';
-        if (propTitleError) propTitleError.textContent = '';
-        if (propPriceError) propPriceError.textContent = '';
-        if (propFormError)  propFormError.textContent = '';
+        [propTitleError, propPriceError, propFormError].forEach(el => { if (el) el.textContent = ''; });
+        [propTitleInput, propZoneSelect, propPriceInput, propBedsInput, propBathsInput, propBuiltInput]
+            .forEach(el => el?.setAttribute('aria-invalid', 'false'));
+    }
+
+    function openCreateProperty() {
+        editingPropertyId = null;
+        resetPropForm();
+        if (propModalTitle) propModalTitle.textContent = 'Nueva propiedad';
+        if (propSubmitBtn) propSubmitBtn.textContent = 'Crear';
         propModal?.showModal();
+    }
+
+    async function openEditProperty(id: string) {
+        editingPropertyId = id;
+        resetPropForm();
+        if (propModalTitle) propModalTitle.textContent = 'Editar propiedad';
+        if (propSubmitBtn) propSubmitBtn.textContent = 'Guardar';
+        propModal?.showModal();
+
+        try {
+            const res = await fetch(`/api/properties/${id}`);
+            if (!res.ok) throw new Error('fetch failed');
+            const { property, images } = await res.json() as {
+                property: Record<string, any>;
+                images: { id: number; url: string; caption: string | null }[];
+            };
+
+            if (propTitleInput)  propTitleInput.value  = property.title ?? '';
+            if (propZoneSelect)  propZoneSelect.value  = String(property.zone_id ?? '');
+            if (propAgentSelect) propAgentSelect.value = String(property.agent_id ?? '');
+            if (propPriceInput)  propPriceInput.value  = String(property.price ?? '');
+            if (propBedsInput)   propBedsInput.value   = String(property.n_beds ?? '');
+            if (propBathsInput)  propBathsInput.value  = String(property.n_baths ?? '');
+            if (propBuiltInput)  propBuiltInput.value  = String(property.m_built ?? '');
+            if (propTerrainInput) propTerrainInput.value = property.terrain_space ?? '';
+            if (propTagSelect)    propTagSelect.value    = property.tag ?? 'for_sale';
+            if (propStatusSelect) propStatusSelect.value = property.status ?? 'draft';
+            if (propDescInput)    propDescInput.value    = property.description ?? '';
+            if (propFeaturesInput) propFeaturesInput.value = (property.features ?? []).join(', ');
+            if (propDistancesInput) propDistancesInput.value =
+                (property.distances ?? []).map((d: any) => `${d.value} ${d.unit} ${d.label}`).join('\n');
+            if (propLatInput) propLatInput.value = property.latitude ?? '';
+            if (propLngInput) propLngInput.value = property.longitude ?? '';
+            if (propFeaturedInput) propFeaturedInput.checked = Boolean(property.is_featured);
+
+            propPhotos = images.map(img => ({
+                existingId: img.id,
+                url:        img.url,
+                caption:    img.caption ?? '',
+            }));
+            renderPropPhotos();
+        } catch {
+            if (propFormError) propFormError.textContent = 'No se pudieron cargar los datos de la propiedad.';
+        }
+    }
+
+    openPropBtn?.addEventListener('click', () => openCreateProperty());
+    document.querySelectorAll<HTMLButtonElement>('[data-edit-property]').forEach(btn => {
+        btn.addEventListener('click', () => openEditProperty(btn.dataset.editProperty!));
     });
     propCloseBtn?.addEventListener('click', () => propModal?.close());
     propCancelBtn?.addEventListener('click', () => propModal?.close());
@@ -1224,31 +1294,54 @@ const propertyStatusLabel: Record<string, string> = {
 
         if (!valid) return;
 
+        const isEdit = editingPropertyId !== null;
         propSubmitBtn.disabled = true;
-        propSubmitBtn.textContent = 'Creando…';
+        propSubmitBtn.textContent = isEdit ? 'Guardando…' : 'Creando…';
 
         try {
             const formData = new FormData(propForm);
-            // Append photos and captions in their current (drag-ordered) order.
-            propPhotos.forEach(photo => {
-                formData.append('photos', photo.file);
-                formData.append('captions', photo.caption);
-            });
 
-            const res = await fetch('/api/properties', { method: 'POST', body: formData });
+            if (isEdit) {
+                // Send the desired gallery order: existing images by id, new ones by file index.
+                const order: { existingId?: number; newIndex?: number; caption: string }[] = [];
+                let newIndex = 0;
+                propPhotos.forEach(photo => {
+                    if (photo.existingId != null) {
+                        order.push({ existingId: photo.existingId, caption: photo.caption });
+                    } else if (photo.file) {
+                        formData.append('photos', photo.file);
+                        order.push({ newIndex: newIndex++, caption: photo.caption });
+                    }
+                });
+                formData.append('images_order', JSON.stringify(order));
+            } else {
+                // Create: photos and captions as parallel arrays in display order.
+                propPhotos.forEach(photo => {
+                    if (photo.file) {
+                        formData.append('photos', photo.file);
+                        formData.append('captions', photo.caption);
+                    }
+                });
+            }
+
+            const res = await fetch(
+                isEdit ? `/api/properties/${editingPropertyId}` : '/api/properties',
+                { method: isEdit ? 'PATCH' : 'POST', body: formData },
+            );
             if (res.ok) {
                 window.location.reload();
                 return;
             }
             const data = await res.json().catch(() => ({})) as { error?: string };
             if (propFormError) {
-                propFormError.textContent = (data.error && propApiErrors[data.error]) ?? 'No se pudo crear la propiedad. Inténtalo de nuevo.';
+                propFormError.textContent = (data.error && propApiErrors[data.error])
+                    ?? (isEdit ? 'No se pudo guardar la propiedad. Inténtalo de nuevo.' : 'No se pudo crear la propiedad. Inténtalo de nuevo.');
             }
         } catch {
             if (propFormError) propFormError.textContent = 'Error de conexión. Inténtalo de nuevo.';
         } finally {
             propSubmitBtn.disabled = false;
-            propSubmitBtn.textContent = 'Crear';
+            propSubmitBtn.textContent = isEdit ? 'Guardar' : 'Crear';
         }
     });
 
