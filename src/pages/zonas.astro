@@ -4,15 +4,16 @@ import Footer from "../components/Footer.astro"
 import "../styles/global.css"
 import ArrowRight from "../components/icons/ArrowRight.astro"
 import { getZones } from '../services/zones'
+import { getCountries } from '../services/countries'
+
+const [zoneList, countriesList] = await Promise.all([getZones(), getCountries()])
 
 const stats = [
-    { value: "6",    label: "Regiones rurales" },
-    { value: "+340", label: "Propiedades activas" },
-    { value: "4",    label: "Países" },
-    { value: "24 h", label: "Respuesta media" },
+    { value: String(zoneList.length),      label: "Regiones rurales" },
+    { value: "+340",                        label: "Propiedades activas" },
+    { value: String(countriesList.length), label: "Países" },
+    { value: "24 h",                        label: "Respuesta media" },
 ]
-
-const zoneList = await getZones()
 
 const formatPrice = (price: number | null) =>
     price ? new Intl.NumberFormat('es-ES').format(price) : '0'

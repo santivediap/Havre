@@ -5,12 +5,15 @@ import Location from "../components/icons/Location.astro"
 import Lifeline from "../components/icons/Lifeline.astro"
 import Heart from "../components/icons/Heart.astro"
 import ArrowRight from "../components/icons/ArrowRight.astro"
+import { getCountries } from "../services/countries"
 import "../styles/global.css"
+
+const countriesList = await getCountries()
 
 const companyMetrics = [
     { value: "2019", label: "Año en que empezamos" },
     { value: "+340", label: "Propiedades acompañadas" },
-    { value: "4",    label: "Países: España, Italia, Portugal, Francia" },
+    { value: String(countriesList.length), label: `Países: ${countriesList.map(c => c.name).join(", ")}` },
     { value: "96%",  label: "Clientes que nos recomiendan" },
 ]
 

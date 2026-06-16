@@ -4,17 +4,29 @@ import Search from "../components/icons/Search.astro"
 import Footer from "../components/Footer.astro"
 import ArrowRight from "../components/icons/ArrowRight.astro"
 import { getZones } from "../services/zones"
+import { getFeaturedProperties } from "../services/properties"
 
-const zoneList = await getZones()
+const [zoneList, featured] = await Promise.all([getZones(), getFeaturedProperties()])
 
-const properties = [
-	{ tag: "EN VENTA",   location: "TOSCANA, ITALIA",    title: "Masía entre olivares",       specs: ["4 hab.", "2 baños", "320 m²", "1.2 ha"], price: "€ 685.000"   },
-	{ tag: "NUEVO",      location: "PROVENZA, FRANCIA",  title: "Casa de piedra con viñedo",  specs: ["5 hab.", "3 baños", "410 m²"],            price: "€ 920.000"   },
-	{ tag: "DESTACADO",  location: "PIRINEOS, ESPAÑA",   title: "Cortijo restaurado",         specs: ["3 hab.", "2 baños", "240 m²"],            price: "€ 540.000"   },
-	{ tag: "EN VENTA",   location: "ALENTEJO, PORTUGAL", title: "Quinta con naranjos",        specs: ["6 hab.", "4 baños", "520 m²", "3 ha"],    price: "€ 1.150.000" },
-	{ tag: "NUEVO",      location: "UMBRÍA, ITALIA",     title: "Casale entre colinas",       specs: ["4 hab.", "3 baños", "360 m²"],            price: "€ 795.000"   },
-	{ tag: "EN VENTA",   location: "EMPORDÀ, ESPAÑA",    title: "Casa rural de piedra",       specs: ["3 hab.", "2 baños", "280 m²", "0.8 ha"], price: "€ 620.000"   },
-]
+const tagLabels: Record<string, string> = {
+	for_sale: "EN VENTA", new: "NUEVO", reserved: "RESERVADO", sold: "VENDIDO",
+}
+
+const formatPrice = (price: number) => `€ ${new Intl.NumberFormat('es-ES').format(price)}`
+
+const properties = featured.map(p => ({
+	tag:       tagLabels[p.tag] ?? "EN VENTA",
+	location:  `${p.zone}, ${p.country}`.toUpperCase(),
+	title:     p.title,
+	specs:     [
+		`${p.n_beds} hab.`,
+		`${p.n_baths} baños`,
+		`${p.m_built} m²`,
+		...(p.terrain_space ? [`${Number(p.terrain_space)} ha`] : []),
+	],
+	price:     formatPrice(p.price),
+	image_url: p.image_url,
+}))
 ---
 
 <html lang="en">
@@ -74,7 +86,7 @@ const properties = [
 				<div class="featured-properties">
 					{ properties.map((property) => (
 						<article class="property">
-							<div class="property-image">
+							<div class="property-image" style={property.image_url ? `--img: url(${property.image_url})` : undefined}>
 								<p class="property-tag">{property.tag}</p>
 							</div>
 
@@ -311,7 +323,7 @@ const properties = [
 .property-image {
 	position: relative;
 	height: 210px;
-	background-image: repeating-linear-gradient(135deg, #E9EDC9 0 14px, #E1E6BC 14px 28px);
+	background: var(--img, repeating-linear-gradient(135deg, #E9EDC9 0 14px, #E1E6BC 14px 28px)) center / cover no-repeat;
 }
 
 .property-tag {

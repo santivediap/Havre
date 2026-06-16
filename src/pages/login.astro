@@ -1,7 +1,11 @@
 ---
 import ArrowRight from "../components/icons/ArrowRight.astro"
 import Lock from "../components/icons/Lock.astro"
+import { getSession } from "../lib/auth"
 import "../styles/global.css"
+
+// Already-authenticated users have no business on the login page.
+if (await getSession(Astro.cookies)) return Astro.redirect('/admin')
 ---
 
 <!DOCTYPE html>
