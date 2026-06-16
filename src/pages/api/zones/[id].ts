@@ -89,7 +89,10 @@ export const DELETE: APIRoute = async ({ params }) => {
         }
 
         return json({ message: 'Zone deleted', id: zone.id }, 200);
-    } catch (err) {
+    } catch (err: any) {
+        if (err?.code === '23503') {
+            return json({ error: 'Zone has properties' }, 409);
+        }
         console.error(err);
         return json({ error: 'Internal server error' }, 500);
     }

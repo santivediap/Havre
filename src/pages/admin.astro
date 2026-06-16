@@ -10,6 +10,7 @@ import Trash from "../components/icons/Trash.astro"
 import { getSession } from "../lib/auth"
 import { getUserById, getUsers } from "../services/users"
 import { getZones } from "../services/zones"
+import { getCountries } from "../services/countries"
 import { getProperties } from "../services/properties"
 
 const session = await getSession(Astro.cookies)
@@ -19,7 +20,7 @@ const me = await getUserById(session.sub)
 if (!me) return Astro.redirect('/login')
 
 const isAdmin = session.role === 'admin'
-const [zonesList, propertiesList] = await Promise.all([getZones(), getProperties()])
+const [zonesList, propertiesList, countriesList] = await Promise.all([getZones(), getProperties(), getCountries()])
 const usersList = isAdmin ? await getUsers() : []
 const tones = ['olive', 'bronze', 'sage'] as const
 const toneFor = (i: number) => tones[i % tones.length]
@@ -172,7 +173,7 @@ const propertyStatusLabel: Record<string, string> = {
                             <h2 id="zones-heading">Zonas</h2>
                             <p>Las regiones rurales publicadas en la web.</p>
                         </div>
-                        <button type="button" class="new-user-btn"><span aria-hidden="true">+</span> Nueva zona</button>
+                        <button type="button" class="new-user-btn" id="open-new-zone"><span aria-hidden="true">+</span> Nueva zona</button>
                     </div>
 
                     <ul class="user-list" role="list">
@@ -202,7 +203,7 @@ const propertyStatusLabel: Record<string, string> = {
 
                                 <div class="user-actions">
                                     <button type="button" class="icon-btn" aria-label={`Editar ${zone.name}`}><Edit /></button>
-                                    <button type="button" class="icon-btn icon-btn--danger" aria-label={`Eliminar ${zone.name}`}><Trash /></button>
+                                    <button type="button" class="icon-btn icon-btn--danger" data-delete-zone={zone.id} data-zone-name={zone.name} aria-label={`Eliminar ${zone.name}`}><Trash /></button>
                                 </div>
                             </li>
                         )) }
@@ -313,6 +314,58 @@ const propertyStatusLabel: Record<string, string> = {
                 </form>
             </dialog>
         ) }
+
+        <dialog class="modal" id="new-zone-modal" aria-labelledby="nz-title">
+            <div class="modal-head">
+                <div>
+                    <h2 id="nz-title">Nueva zona</h2>
+                </div>
+                <button type="button" class="modal-close" id="nz-close" aria-label="Cerrar">&times;</button>
+            </div>
+
+            <form class="modal-form" id="new-zone-form" novalidate>
+                <div class="avatar-upload">
+                    <span class="zone-thumb" id="nz-image-preview" aria-hidden="true"></span>
+                    <div>
+                        <label class="upload-btn" for="nz-image">Subir imagen</label>
+                        <input type="file" id="nz-image" name="image" accept="image/*" hidden />
+                        <p class="upload-hint">JPG o PNG · máx. 5 MB</p>
+                    </div>
+                </div>
+
+                <div class="modal-field">
+                    <label for="nz-name">Nombre</label>
+                    <input type="text" id="nz-name" name="name" placeholder="Toscana" aria-describedby="nz-name-error" required />
+                    <p class="field-error" id="nz-name-error" role="alert"></p>
+                </div>
+
+                <div class="modal-field">
+                    <label for="nz-country">País</label>
+                    <select id="nz-country" name="country_id">
+                        { countriesList.map(country => (
+                            <option value={country.id}>{country.name}</option>
+                        )) }
+                    </select>
+                </div>
+
+                <div class="modal-field">
+                    <label for="nz-description">Descripción <span class="field-optional">(opcional)</span></label>
+                    <textarea id="nz-description" name="description" rows="3" placeholder="Colinas de olivos y cipreses, masías de piedra..."></textarea>
+                </div>
+
+                <div class="modal-field">
+                    <label for="nz-tags">Tags <span class="field-optional">(separados por comas)</span></label>
+                    <input type="text" id="nz-tags" name="tags" placeholder="Olivares, Masías, Viñedos" autocomplete="off" />
+                </div>
+
+                <p class="form-error" id="nz-form-error" role="alert"></p>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="nz-cancel">Cancelar</button>
+                    <button type="submit" class="btn-primary">Crear</button>
+                </div>
+            </form>
+        </dialog>
 
         <dialog class="confirm-modal" id="confirm-modal" aria-labelledby="confirm-title">
             <div class="confirm-icon" aria-hidden="true"><Trash /></div>
@@ -602,6 +655,119 @@ const propertyStatusLabel: Record<string, string> = {
                 }
                 const data = await res.json().catch(() => ({})) as { error?: string };
                 alert((data.error && deleteErrors[data.error]) ?? 'No se pudo eliminar el usuario.');
+                btn.disabled = false;
+            } catch {
+                alert('Error de conexión. Inténtalo de nuevo.');
+                btn.disabled = false;
+            }
+        });
+    });
+
+    // ── Modal: new zone ────────────────────────────────────
+    const zoneModal     = document.querySelector<HTMLDialogElement>('#new-zone-modal');
+    const openZoneBtn   = document.querySelector<HTMLButtonElement>('#open-new-zone');
+    const zoneCloseBtn  = document.querySelector<HTMLButtonElement>('#nz-close');
+    const zoneCancelBtn = document.querySelector<HTMLButtonElement>('#nz-cancel');
+    const zoneForm      = document.querySelector<HTMLFormElement>('#new-zone-form');
+    const zoneNameInput = document.querySelector<HTMLInputElement>('#nz-name');
+    const zoneNameError = document.querySelector<HTMLParagraphElement>('#nz-name-error');
+    const zoneFormError = document.querySelector<HTMLParagraphElement>('#nz-form-error');
+    const zoneImageInput   = document.querySelector<HTMLInputElement>('#nz-image');
+    const zoneImagePreview = document.querySelector<HTMLSpanElement>('#nz-image-preview');
+    const zoneSubmitBtn    = zoneForm?.querySelector<HTMLButtonElement>('.btn-primary');
+
+    const zoneApiErrors: Record<string, string> = {
+        'Country not found':        'El país seleccionado no existe.',
+        'A zone with that slug already exists': 'Ya existe una zona con ese nombre.',
+        'Image must be an image file': 'El archivo debe ser una imagen.',
+        'Image exceeds 5 MB':       'La imagen supera los 5 MB.',
+        'Could not upload image':   'No se pudo subir la imagen. Inténtalo de nuevo.',
+    };
+
+    openZoneBtn?.addEventListener('click', () => zoneModal?.showModal());
+    zoneCloseBtn?.addEventListener('click', () => zoneModal?.close());
+    zoneCancelBtn?.addEventListener('click', () => zoneModal?.close());
+    zoneModal?.addEventListener('click', (event) => {
+        if (event.target === zoneModal) zoneModal.close();
+    });
+
+    let zonePreviewUrl: string | null = null;
+    zoneImageInput?.addEventListener('change', () => {
+        const file = zoneImageInput.files?.[0];
+        if (!file || !zoneImagePreview) return;
+        if (zonePreviewUrl) URL.revokeObjectURL(zonePreviewUrl);
+        zonePreviewUrl = URL.createObjectURL(file);
+        zoneImagePreview.style.backgroundImage = `url(${zonePreviewUrl})`;
+        zoneImagePreview.style.backgroundSize = 'cover';
+        zoneImagePreview.style.backgroundPosition = 'center';
+    });
+
+    zoneForm?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (!zoneNameInput || !zoneSubmitBtn) return;
+
+        if (zoneFormError) zoneFormError.textContent = '';
+
+        const name = zoneNameInput.value.trim();
+        if (!name) {
+            if (zoneNameError) zoneNameError.textContent = 'Introduce el nombre de la zona.';
+            zoneNameInput.setAttribute('aria-invalid', 'true');
+            return;
+        }
+        if (zoneNameError) zoneNameError.textContent = '';
+        zoneNameInput.setAttribute('aria-invalid', 'false');
+
+        zoneSubmitBtn.disabled = true;
+        zoneSubmitBtn.textContent = 'Creando…';
+
+        try {
+            const res = await fetch('/api/zones', { method: 'POST', body: new FormData(zoneForm) });
+            if (res.ok) {
+                window.location.reload();
+                return;
+            }
+            const data = await res.json().catch(() => ({})) as { error?: string };
+            if (zoneFormError) {
+                zoneFormError.textContent = (data.error && zoneApiErrors[data.error]) ?? 'No se pudo crear la zona. Inténtalo de nuevo.';
+            }
+        } catch {
+            if (zoneFormError) zoneFormError.textContent = 'Error de conexión. Inténtalo de nuevo.';
+        } finally {
+            zoneSubmitBtn.disabled = false;
+            zoneSubmitBtn.textContent = 'Crear';
+        }
+    });
+
+    // ── Delete zone ──────────────────────────────────────────
+    const zonesCount = document.querySelector<HTMLElement>('.sidebar-nav a[href="#zonas"] em');
+    const zoneDeleteErrors: Record<string, string> = {
+        'Zone has properties': 'No se puede eliminar: la zona tiene propiedades asignadas.',
+        'Zone not found':      'La zona ya no existe.',
+    };
+
+    document.querySelectorAll<HTMLButtonElement>('[data-delete-zone]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id   = btn.dataset.deleteZone;
+            const name = btn.dataset.zoneName ?? 'esta zona';
+            if (!id) return;
+
+            const ok = await askConfirm({
+                title:        'Eliminar zona',
+                message:      `¿Seguro que quieres eliminar ${name}? Esta acción no se puede deshacer.`,
+                confirmLabel: 'Eliminar',
+            });
+            if (!ok) return;
+
+            btn.disabled = true;
+            try {
+                const res = await fetch(`/api/zones/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    btn.closest('.user-row')?.remove();
+                    if (zonesCount) zonesCount.textContent = String(Math.max(0, Number(zonesCount.textContent) - 1));
+                    return;
+                }
+                const data = await res.json().catch(() => ({})) as { error?: string };
+                alert((data.error && zoneDeleteErrors[data.error]) ?? 'No se pudo eliminar la zona.');
                 btn.disabled = false;
             } catch {
                 alert('Error de conexión. Inténtalo de nuevo.');
@@ -1071,7 +1237,8 @@ const propertyStatusLabel: Record<string, string> = {
     }
 
     .modal-field input,
-    .modal-field select {
+    .modal-field select,
+    .modal-field textarea {
         width: 100%;
         font-family: var(--havre-font-sans);
         font-size: var(--havre-text-body);
@@ -1084,12 +1251,29 @@ const propertyStatusLabel: Record<string, string> = {
         transition: border-color 0.12s ease, box-shadow 0.12s ease;
     }
 
-    .modal-field input::placeholder { color: var(--havre-ink-300); }
+    .modal-field textarea {
+        resize: vertical;
+        min-height: 72px;
+    }
+
+    .modal-field input::placeholder,
+    .modal-field textarea::placeholder { color: var(--havre-ink-300); }
 
     .modal-field input:focus,
-    .modal-field select:focus {
+    .modal-field select:focus,
+    .modal-field textarea:focus {
         border-color: var(--havre-bronze-default);
         box-shadow: 0 0 0 3px var(--havre-bronze-ring);
+    }
+
+    .zone-thumb {
+        flex-shrink: 0;
+        width: 96px;
+        height: 64px;
+        border-radius: var(--havre-radius-md);
+        background-image: repeating-linear-gradient(135deg, #CFD8B4 0 9px, #C3CDA1 9px 18px);
+        background-size: cover;
+        background-position: center;
     }
 
     .modal-actions {

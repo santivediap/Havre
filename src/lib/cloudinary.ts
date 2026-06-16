@@ -5,10 +5,8 @@ async function sha1(message: string): Promise<string> {
     return [...new Uint8Array(buffer)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-export async function uploadAvatar(file: File): Promise<string> {
-    const timestamp      = Math.floor(Date.now() / 1000).toString();
-    const folder         = 'havre/avatars';
-    const transformation = 'c_fill,g_auto,h_400,w_400,f_webp';
+async function upload(file: File, folder: string, transformation: string): Promise<string> {
+    const timestamp = Math.floor(Date.now() / 1000).toString();
     const toSign    = `folder=${folder}&timestamp=${timestamp}&transformation=${transformation}`;
     const signature = await sha1(toSign + env.CLOUDINARY_API_SECRET);
 
@@ -31,4 +29,12 @@ export async function uploadAvatar(file: File): Promise<string> {
 
     const data = await res.json() as { secure_url: string };
     return data.secure_url;
+}
+
+export function uploadAvatar(file: File): Promise<string> {
+    return upload(file, 'havre/avatars', 'c_fill,g_auto,h_400,w_400,f_webp');
+}
+
+export function uploadZoneImage(file: File): Promise<string> {
+    return upload(file, 'havre/zones', 'c_fill,g_auto,h_800,w_1200,f_webp');
 }
