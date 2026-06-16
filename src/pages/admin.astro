@@ -9,7 +9,7 @@ import Edit from "../components/icons/Edit.astro"
 import Trash from "../components/icons/Trash.astro"
 import { getSession } from "../lib/auth"
 import { getUserById, getUsers } from "../services/users"
-import { getZones } from "../services/zones"
+import { getZonesAdmin } from "../services/zones"
 import { getCountries } from "../services/countries"
 import { getProperties } from "../services/properties"
 
@@ -20,7 +20,7 @@ const me = await getUserById(session.sub)
 if (!me) return Astro.redirect('/login')
 
 const isAdmin = session.role === 'admin'
-const [zonesList, propertiesList, countriesList] = await Promise.all([getZones(), getProperties(), getCountries()])
+const [zonesList, propertiesList, countriesList] = await Promise.all([getZonesAdmin(), getProperties(), getCountries()])
 const usersList = isAdmin ? await getUsers() : []
 const tones = ['olive', 'bronze', 'sage'] as const
 const toneFor = (i: number) => tones[i % tones.length]
@@ -181,7 +181,7 @@ const propertyStatusLabel: Record<string, string> = {
                     <ul class="user-list" role="list">
                         { zonesList.length === 0 && <li class="empty">Aún no hay zonas.</li> }
                         { zonesList.map((zone, i) => (
-                            <li class="user-row">
+                            <li class={`user-row ${zone.is_active ? "" : "is-inactive"}`}>
                                 <span class={`avatar avatar--${toneFor(i)}`} aria-hidden="true">
                                     { zone.image_url
                                         ? <img src={zone.image_url} alt="" />
@@ -204,7 +204,17 @@ const propertyStatusLabel: Record<string, string> = {
                                 </div>
 
                                 <div class="user-actions">
-                                    <button type="button" class="icon-btn" aria-label={`Editar ${zone.name}`}><Edit /></button>
+                                    <button type="button" class="icon-btn"
+                                        data-edit-zone={zone.id}
+                                        data-name={zone.name}
+                                        data-country={zone.country_id}
+                                        data-slug={zone.slug}
+                                        data-description={zone.description ?? ''}
+                                        data-tags={zone.tags?.join(', ') ?? ''}
+                                        data-order={zone.display_order}
+                                        data-active={String(zone.is_active)}
+                                        data-image={zone.image_url ?? ''}
+                                        aria-label={`Editar ${zone.name}`}><Edit /></button>
                                     <button type="button" class="icon-btn icon-btn--danger" data-delete-zone={zone.id} data-zone-name={zone.name} aria-label={`Eliminar ${zone.name}`}><Trash /></button>
                                 </div>
                             </li>
@@ -359,6 +369,11 @@ const propertyStatusLabel: Record<string, string> = {
                 </div>
 
                 <div class="modal-field">
+                    <label for="nz-slug">Slug <span class="field-optional">(se genera del nombre si lo dejas vacío)</span></label>
+                    <input type="text" id="nz-slug" name="slug" placeholder="toscana" autocomplete="off" />
+                </div>
+
+                <div class="modal-field">
                     <label for="nz-description">Descripción <span class="field-optional">(opcional)</span></label>
                     <textarea id="nz-description" name="description" rows="3" placeholder="Colinas de olivos y cipreses, masías de piedra..."></textarea>
                 </div>
@@ -366,6 +381,19 @@ const propertyStatusLabel: Record<string, string> = {
                 <div class="modal-field">
                     <label for="nz-tags">Tags <span class="field-optional">(separados por comas)</span></label>
                     <input type="text" id="nz-tags" name="tags" placeholder="Olivares, Masías, Viñedos" autocomplete="off" />
+                </div>
+
+                <div class="modal-field">
+                    <label for="nz-order">Orden <span class="field-optional">(menor aparece antes)</span></label>
+                    <input type="number" id="nz-order" name="display_order" min="0" placeholder="0" />
+                </div>
+
+                <div class="modal-field" id="nz-status-field" hidden>
+                    <label for="nz-status">Estado</label>
+                    <select id="nz-status" name="is_active">
+                        <option value="true">Activa</option>
+                        <option value="false">Inactiva</option>
+                    </select>
                 </div>
 
                 <p class="form-error" id="nz-form-error" role="alert"></p>
@@ -685,35 +713,94 @@ const propertyStatusLabel: Record<string, string> = {
         });
     });
 
-    // ── Modal: new zone ────────────────────────────────────
-    const zoneModal     = document.querySelector<HTMLDialogElement>('#new-zone-modal');
-    const openZoneBtn   = document.querySelector<HTMLButtonElement>('#open-new-zone');
-    const zoneCloseBtn  = document.querySelector<HTMLButtonElement>('#nz-close');
-    const zoneCancelBtn = document.querySelector<HTMLButtonElement>('#nz-cancel');
-    const zoneForm      = document.querySelector<HTMLFormElement>('#new-zone-form');
-    const zoneNameInput = document.querySelector<HTMLInputElement>('#nz-name');
-    const zoneNameError = document.querySelector<HTMLParagraphElement>('#nz-name-error');
-    const zoneFormError = document.querySelector<HTMLParagraphElement>('#nz-form-error');
+    // ── Modal: create / edit zone ───────────────────────────
+    const zoneModal      = document.querySelector<HTMLDialogElement>('#new-zone-modal');
+    const openZoneBtn    = document.querySelector<HTMLButtonElement>('#open-new-zone');
+    const zoneCloseBtn   = document.querySelector<HTMLButtonElement>('#nz-close');
+    const zoneCancelBtn  = document.querySelector<HTMLButtonElement>('#nz-cancel');
+    const zoneForm       = document.querySelector<HTMLFormElement>('#new-zone-form');
+    const zoneTitle      = document.querySelector<HTMLElement>('#nz-title');
+    const zoneNameInput  = document.querySelector<HTMLInputElement>('#nz-name');
+    const zoneNameError  = document.querySelector<HTMLParagraphElement>('#nz-name-error');
+    const zoneFormError  = document.querySelector<HTMLParagraphElement>('#nz-form-error');
+    const zoneCountrySel = document.querySelector<HTMLSelectElement>('#nz-country');
+    const zoneSlugInput  = document.querySelector<HTMLInputElement>('#nz-slug');
+    const zoneDescInput  = document.querySelector<HTMLTextAreaElement>('#nz-description');
+    const zoneTagsInput  = document.querySelector<HTMLInputElement>('#nz-tags');
+    const zoneOrderInput = document.querySelector<HTMLInputElement>('#nz-order');
+    const zoneStatusField  = document.querySelector<HTMLDivElement>('#nz-status-field');
+    const zoneStatusSelect = document.querySelector<HTMLSelectElement>('#nz-status');
     const zoneImageInput   = document.querySelector<HTMLInputElement>('#nz-image');
     const zoneImagePreview = document.querySelector<HTMLSpanElement>('#nz-image-preview');
     const zoneSubmitBtn    = zoneForm?.querySelector<HTMLButtonElement>('.btn-primary');
 
     const zoneApiErrors: Record<string, string> = {
         'Country not found':        'El país seleccionado no existe.',
-        'A zone with that slug already exists': 'Ya existe una zona con ese nombre.',
+        'A zone with that slug already exists': 'Ya existe una zona con ese slug.',
         'Image must be an image file': 'El archivo debe ser una imagen.',
         'Image exceeds 5 MB':       'La imagen supera los 5 MB.',
         'Could not upload image':   'No se pudo subir la imagen. Inténtalo de nuevo.',
     };
 
-    openZoneBtn?.addEventListener('click', () => zoneModal?.showModal());
+    let editingZoneId: string | null = null;
+    let zonePreviewUrl: string | null = null;
+
+    function resetZoneForm() {
+        zoneForm?.reset();
+        if (zoneNameError) zoneNameError.textContent = '';
+        zoneNameInput?.setAttribute('aria-invalid', 'false');
+        if (zoneFormError) zoneFormError.textContent = '';
+        if (zonePreviewUrl) { URL.revokeObjectURL(zonePreviewUrl); zonePreviewUrl = null; }
+        if (zoneImagePreview) zoneImagePreview.style.backgroundImage = '';
+    }
+
+    function showZoneStatus(show: boolean) {
+        if (zoneStatusField) zoneStatusField.hidden = !show;
+        if (zoneStatusSelect) zoneStatusSelect.disabled = !show;
+    }
+
+    function openCreateZone() {
+        editingZoneId = null;
+        resetZoneForm();
+        showZoneStatus(false);
+        if (zoneTitle) zoneTitle.textContent = 'Nueva zona';
+        if (zoneSubmitBtn) zoneSubmitBtn.textContent = 'Crear';
+        zoneModal?.showModal();
+    }
+
+    function openEditZone(btn: HTMLButtonElement) {
+        editingZoneId = btn.dataset.editZone ?? null;
+        resetZoneForm();
+        showZoneStatus(true);
+        if (zoneTitle) zoneTitle.textContent = 'Editar zona';
+        if (zoneNameInput)   zoneNameInput.value   = btn.dataset.name        ?? '';
+        if (zoneCountrySel)  zoneCountrySel.value   = btn.dataset.country     ?? '';
+        if (zoneSlugInput)   zoneSlugInput.value    = btn.dataset.slug        ?? '';
+        if (zoneDescInput)   zoneDescInput.value    = btn.dataset.description ?? '';
+        if (zoneTagsInput)   zoneTagsInput.value    = btn.dataset.tags        ?? '';
+        if (zoneOrderInput)  zoneOrderInput.value   = btn.dataset.order       ?? '0';
+        if (zoneStatusSelect) zoneStatusSelect.value = btn.dataset.active     ?? 'true';
+        const image = btn.dataset.image;
+        if (image && zoneImagePreview) {
+            zoneImagePreview.style.backgroundImage = `url(${image})`;
+            zoneImagePreview.style.backgroundSize = 'cover';
+            zoneImagePreview.style.backgroundPosition = 'center';
+        }
+        if (zoneSubmitBtn) zoneSubmitBtn.textContent = 'Guardar';
+        zoneModal?.showModal();
+    }
+
+    openZoneBtn?.addEventListener('click', () => openCreateZone());
     zoneCloseBtn?.addEventListener('click', () => zoneModal?.close());
     zoneCancelBtn?.addEventListener('click', () => zoneModal?.close());
     zoneModal?.addEventListener('click', (event) => {
         if (event.target === zoneModal) zoneModal.close();
     });
 
-    let zonePreviewUrl: string | null = null;
+    document.querySelectorAll<HTMLButtonElement>('[data-edit-zone]').forEach(btn => {
+        btn.addEventListener('click', () => openEditZone(btn));
+    });
+
     zoneImageInput?.addEventListener('change', () => {
         const file = zoneImageInput.files?.[0];
         if (!file || !zoneImagePreview) return;
@@ -739,24 +826,29 @@ const propertyStatusLabel: Record<string, string> = {
         if (zoneNameError) zoneNameError.textContent = '';
         zoneNameInput.setAttribute('aria-invalid', 'false');
 
+        const isEdit = editingZoneId !== null;
         zoneSubmitBtn.disabled = true;
-        zoneSubmitBtn.textContent = 'Creando…';
+        zoneSubmitBtn.textContent = isEdit ? 'Guardando…' : 'Creando…';
 
         try {
-            const res = await fetch('/api/zones', { method: 'POST', body: new FormData(zoneForm) });
+            const res = await fetch(
+                isEdit ? `/api/zones/${editingZoneId}` : '/api/zones',
+                { method: isEdit ? 'PATCH' : 'POST', body: new FormData(zoneForm) },
+            );
             if (res.ok) {
                 window.location.reload();
                 return;
             }
             const data = await res.json().catch(() => ({})) as { error?: string };
             if (zoneFormError) {
-                zoneFormError.textContent = (data.error && zoneApiErrors[data.error]) ?? 'No se pudo crear la zona. Inténtalo de nuevo.';
+                zoneFormError.textContent = (data.error && zoneApiErrors[data.error])
+                    ?? (isEdit ? 'No se pudo guardar la zona. Inténtalo de nuevo.' : 'No se pudo crear la zona. Inténtalo de nuevo.');
             }
         } catch {
             if (zoneFormError) zoneFormError.textContent = 'Error de conexión. Inténtalo de nuevo.';
         } finally {
             zoneSubmitBtn.disabled = false;
-            zoneSubmitBtn.textContent = 'Crear';
+            zoneSubmitBtn.textContent = isEdit ? 'Guardar' : 'Crear';
         }
     });
 

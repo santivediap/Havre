@@ -25,6 +25,32 @@ export async function getZones() {
         .orderBy(zones.display_order, zones.name);
 }
 
+export async function getZonesAdmin() {
+    return db
+        .select({
+            id:            zones.id,
+            name:          zones.name,
+            slug:          zones.slug,
+            image_url:     zones.image_url,
+            description:   zones.description,
+            tags:          zones.tags,
+            display_order: zones.display_order,
+            is_active:     zones.is_active,
+            country_id:    zones.country_id,
+            country:       countries.name,
+            count:         count(properties.id),
+            price_from:    min(properties.price),
+        })
+        .from(zones)
+        .innerJoin(countries, eq(zones.country_id, countries.id))
+        .leftJoin(properties, and(
+            eq(properties.zone_id, zones.id),
+            eq(properties.status, 'published'),
+        ))
+        .groupBy(zones.id, countries.name)
+        .orderBy(zones.display_order, zones.name);
+}
+
 export async function getZoneById(id: number) {
     const [zone] = await db
         .select({
