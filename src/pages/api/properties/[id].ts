@@ -1,12 +1,13 @@
 import type { APIRoute } from 'astro';
 import { json, slugify } from '../../../lib/api';
 import { getSession } from '../../../lib/auth';
-import { uploadPropertyImage } from '../../../lib/cloudinary';
+import { uploadPropertyImage, deleteImage } from '../../../lib/cloudinary';
 import {
     getPropertyById,
     getPropertyImages,
     updateProperty,
     syncPropertyImages,
+    deleteProperty,
 } from '../../../services/properties';
 
 const MAX_PHOTOS = 10;
@@ -141,6 +142,27 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
         return json({ property: updated }, 200);
     } catch (err: any) {
         if (err?.code === '23503') return json({ error: 'Zone not found' }, 404);
+        if (err?.code === '22P02') return json({ error: 'Invalid ID' }, 400);
+        console.error(err);
+        return json({ error: 'Internal server error' }, 500);
+    }
+};
+
+export const DELETE: APIRoute = async ({ params, cookies }) => {
+    if (!(await getSession(cookies))) return json({ error: 'Unauthorized' }, 401);
+
+    try {
+        // Grab the image URLs before the cascade removes their rows.
+        const images = await getPropertyImages(params.id!);
+
+        const deleted = await deleteProperty(params.id!);
+        if (!deleted) return json({ error: 'Property not found' }, 404);
+
+        // Best-effort cleanup of the Cloudinary assets.
+        await Promise.allSettled(images.map(img => deleteImage(img.url)));
+
+        return json({ message: 'Property deleted', id: deleted.id }, 200);
+    } catch (err: any) {
         if (err?.code === '22P02') return json({ error: 'Invalid ID' }, 400);
         console.error(err);
         return json({ error: 'Internal server error' }, 500);

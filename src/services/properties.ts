@@ -33,6 +33,16 @@ export async function getPropertyById(id: string) {
     return property ?? null;
 }
 
+// Deletes a property. The DB cascades its images and visit requests;
+// the caller is responsible for cleaning up the Cloudinary assets.
+export async function deleteProperty(id: string) {
+    const [deleted] = await db
+        .delete(properties)
+        .where(eq(properties.id, id))
+        .returning({ id: properties.id });
+    return deleted ?? null;
+}
+
 export async function getPropertyImages(propertyId: string) {
     return db
         .select()

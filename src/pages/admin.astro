@@ -257,7 +257,7 @@ const propertyStatusLabel: Record<string, string> = {
 
                                 <div class="user-actions">
                                     <button type="button" class="icon-btn" data-edit-property={property.id} aria-label={`Editar ${property.title}`}><Edit /></button>
-                                    <button type="button" class="icon-btn icon-btn--danger" aria-label={`Eliminar ${property.title}`}><Trash /></button>
+                                    <button type="button" class="icon-btn icon-btn--danger" data-delete-property={property.id} data-title={property.title} aria-label={`Eliminar ${property.title}`}><Trash /></button>
                                 </div>
                             </li>
                         )) }
@@ -1343,6 +1343,39 @@ const propertyStatusLabel: Record<string, string> = {
             propSubmitBtn.disabled = false;
             propSubmitBtn.textContent = isEdit ? 'Guardar' : 'Crear';
         }
+    });
+
+    // ── Delete property ──────────────────────────────────────
+    const propsCount = document.querySelector<HTMLElement>('.sidebar-nav a[href="#propiedades"] em');
+
+    document.querySelectorAll<HTMLButtonElement>('[data-delete-property]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id    = btn.dataset.deleteProperty;
+            const title = btn.dataset.title ?? 'esta propiedad';
+            if (!id) return;
+
+            const ok = await askConfirm({
+                title:        'Eliminar propiedad',
+                message:      `¿Seguro que quieres eliminar "${title}"? Se borrarán también sus fotos. Esta acción no se puede deshacer.`,
+                confirmLabel: 'Eliminar',
+            });
+            if (!ok) return;
+
+            btn.disabled = true;
+            try {
+                const res = await fetch(`/api/properties/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    btn.closest('.user-row')?.remove();
+                    if (propsCount) propsCount.textContent = String(Math.max(0, Number(propsCount.textContent) - 1));
+                    return;
+                }
+                alert('No se pudo eliminar la propiedad.');
+                btn.disabled = false;
+            } catch {
+                alert('Error de conexión. Inténtalo de nuevo.');
+                btn.disabled = false;
+            }
+        });
     });
 
 </script>
