@@ -144,6 +144,47 @@ export async function getProperties() {
         .orderBy(desc(properties.created_at));
 }
 
+// A single property by its slug, with zone, country and ordered images,
+// for the public detail page.
+export async function getPropertyBySlug(slug: string) {
+    const [property] = await db
+        .select({
+            id:            properties.id,
+            title:         properties.title,
+            slug:          properties.slug,
+            reference:     properties.reference,
+            tag:           properties.tag,
+            status:        properties.status,
+            price:         properties.price,
+            n_beds:        properties.n_beds,
+            n_baths:       properties.n_baths,
+            m_built:       properties.m_built,
+            terrain_space: properties.terrain_space,
+            description:   properties.description,
+            features:      properties.features,
+            latitude:      properties.latitude,
+            longitude:     properties.longitude,
+            distances:     properties.distances,
+            published_at:  properties.published_at,
+            zone:          zones.name,
+            zone_slug:     zones.slug,
+            country:       countries.name,
+            agent_name:    users.name,
+            agent_phone:   users.phone,
+            agent_avatar:  users.avatar_url,
+        })
+        .from(properties)
+        .innerJoin(zones, eq(properties.zone_id, zones.id))
+        .innerJoin(countries, eq(zones.country_id, countries.id))
+        .innerJoin(users, eq(properties.agent_id, users.id))
+        .where(eq(properties.slug, slug));
+
+    if (!property) return null;
+
+    const images = await getPropertyImages(property.id);
+    return { ...property, images };
+}
+
 // Published, featured properties for the homepage, with their cover image,
 // zone and country names.
 export async function getFeaturedProperties(limit = 6) {

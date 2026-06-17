@@ -18,6 +18,7 @@ const properties = featured.map(p => ({
 	tag:       tagLabels[p.tag] ?? "EN VENTA",
 	location:  `${p.zone}, ${p.country}`.toUpperCase(),
 	title:     p.title,
+	slug:      p.slug,
 	specs:     [
 		`${p.n_beds} hab.`,
 		`${p.n_baths} baños`,
@@ -100,7 +101,7 @@ const properties = featured.map(p => ({
 								</ul>
 								<div class="property-footer">
 									<p class="property-price">{property.price}</p>
-									<a class="property-link" href="">Ver ficha</a>
+									<a class="property-link" href={`/comprar/${property.slug}`}>Ver ficha</a>
 								</div>
 							</div>
 						</article>

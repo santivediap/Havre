@@ -1,0 +1,792 @@
+---
+import Header from "../../components/Header.astro"
+import ArrowLeft from "../../components/icons/ArrowLeft.astro"
+import Heart from "../../components/icons/Heart.astro"
+import Share from "../../components/icons/Share.astro"
+import Bed from "../../components/icons/Bed.astro"
+import Bath from "../../components/icons/Bath.astro"
+import Floorplan from "../../components/icons/Floorplan.astro"
+import Sprout from "../../components/icons/Sprout.astro"
+import Check from "../../components/icons/Check.astro"
+import Location from "../../components/icons/Location.astro"
+import { getPropertyBySlug } from "../../services/properties"
+import "../../styles/global.css"
+
+const { slug } = Astro.params
+const property = slug ? await getPropertyBySlug(slug) : null
+if (!property) return Astro.redirect('/comprar')
+
+const tagLabels: Record<string, string> = {
+    for_sale: "En venta", new: "Nuevo", reserved: "Reservado", sold: "Vendido",
+}
+
+const nf = new Intl.NumberFormat('es-ES')
+const formatPrice = (price: number) => `€ ${nf.format(price)}`
+const pricePerM2 = property.m_built ? Math.round(property.price / property.m_built) : null
+
+const agentInitials = property.agent_name.trim().split(/\s+/).slice(0, 2)
+    .map(w => w[0]?.toUpperCase() ?? '').join('')
+
+// Relative "publicado hace…" label.
+const rtf = new Intl.RelativeTimeFormat('es', { numeric: 'auto' })
+function timeAgo(date: Date | string) {
+    const days = Math.floor((Date.now() - new Date(date).getTime()) / 86_400_000)
+    if (days < 1)   return 'hoy'
+    if (days < 7)   return rtf.format(-days, 'day')
+    if (days < 30)  return rtf.format(-Math.floor(days / 7), 'week')
+    if (days < 365) return rtf.format(-Math.floor(days / 30), 'month')
+    return rtf.format(-Math.floor(days / 365), 'year')
+}
+
+const specs = [
+    { icon: Bed,       value: String(property.n_beds),    label: "Habitaciones" },
+    { icon: Bath,      value: String(property.n_baths),   label: "Baños" },
+    { icon: Floorplan, value: `${property.m_built} m²`,   label: "Construidos" },
+]
+if (property.terrain_space) {
+    specs.push({ icon: Sprout, value: `${nf.format(Number(property.terrain_space))} ha`, label: "Terreno" })
+}
+
+// Gallery: the first image is the cover, the next four are thumbnails.
+const cover     = property.images[0] ?? null
+const thumbs    = property.images.slice(1, 5)
+const totalImgs = property.images.length
+const extraImgs = totalImgs - 5
+
+const location = `${property.zone}, ${property.country}`
+const indexable = property.status === 'published'
+const metaDescription = (property.description?.trim()
+    || `${property.title} en ${location}. ${property.n_beds} habitaciones, ${property.n_baths} baños y ${property.m_built} m² construidos.`
+).slice(0, 155)
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    { !indexable && <meta name="robots" content="noindex, nofollow" /> }
+    <title>{property.title} · {location} | Havre</title>
+    <meta name="description" content={metaDescription} />
+    <link rel="canonical" href={`/comprar/${property.slug}`} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={`${property.title} · ${location}`} />
+    <meta property="og:description" content={metaDescription} />
+    { cover && <meta property="og:image" content={cover.url} /> }
+</head>
+<body>
+    <Header />
+
+    <main class="property-detail">
+        <div class="breadcrumb" aria-label="Migas de pan">
+            <a class="back-link" href="/comprar"><ArrowLeft /> Volver a resultados</a>
+            <span class="sep" aria-hidden="true">·</span>
+            <ol>
+                <li><a href="/comprar">Comprar</a></li>
+                <li><a href={`/zonas/${property.zone_slug}`}>{property.zone}</a></li>
+                <li aria-current="page">{property.title}</li>
+            </ol>
+        </div>
+
+        <article>
+            <section class="gallery" aria-label="Galería de imágenes">
+                <figure class="gallery-main" style={cover ? `--img: url(${cover.url})` : undefined}>
+                    <span class="gallery-tag">{tagLabels[property.tag] ?? "En venta"}</span>
+                    { cover?.caption && <figcaption class="gallery-caption">{cover.caption}</figcaption> }
+                    { totalImgs > 0 && <span class="gallery-counter">1 / {totalImgs}</span> }
+                </figure>
+
+                { thumbs.length > 0 && (
+                    <div class="gallery-thumbs">
+                        { thumbs.map((img, i) => (
+                            <button
+                                type="button"
+                                class="gallery-thumb"
+                                style={`--img: url(${img.url})`}
+                                aria-label={img.caption ?? `Ver imagen ${i + 2}`}
+                            >
+                                { img.caption && <span class="thumb-caption">{img.caption}</span> }
+                                { i === thumbs.length - 1 && extraImgs > 0 && (
+                                    <span class="thumb-more">+{extraImgs} fotos</span>
+                                ) }
+                            </button>
+                        )) }
+                    </div>
+                ) }
+            </section>
+
+            <section class="detail">
+                <div class="detail-main">
+                    <div class="property-head">
+                        <div>
+                            <p class="eyebrow">{location}</p>
+                            <h1>{property.title}</h1>
+                        </div>
+                        <div class="property-actions">
+                            <button type="button" class="action-btn"><Heart /> Guardar</button>
+                            <button type="button" class="action-btn"><Share /> Compartir</button>
+                        </div>
+                    </div>
+
+                    <hr class="divider" />
+
+                    <ul class="specs" role="list">
+                        { specs.map(spec => (
+                            <li class="spec">
+                                <span class="spec-icon" aria-hidden="true"><spec.icon /></span>
+                                <div>
+                                    <p class="spec-value">{spec.value}</p>
+                                    <p class="spec-label">{spec.label}</p>
+                                </div>
+                            </li>
+                        )) }
+                    </ul>
+
+                    <div class="about" aria-labelledby="about-heading">
+                        <h2 id="about-heading">Sobre esta propiedad</h2>
+                        { property.description && <p>{property.description}</p> }
+                    </div>
+
+                    { property.features && property.features.length > 0 && (
+                        <div class="features" aria-labelledby="features-heading">
+                            <h2 id="features-heading">Características</h2>
+                            <ul role="list">
+                                { property.features.map(feature => (
+                                    <li>
+                                        <span class="feature-check" aria-hidden="true"><Check /></span>
+                                        {feature}
+                                    </li>
+                                )) }
+                            </ul>
+                        </div>
+                    ) }
+
+                    <div class="zone-block" aria-labelledby="zone-heading">
+                        <h2 id="zone-heading">La zona</h2>
+                        <div class="zone-map">
+                            <span class="zone-pin"><Location /> {location}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <aside class="sidebar" aria-label="Precio y solicitud de visita">
+                    <div class="visit-card">
+                        <p class="price-label">Precio</p>
+                        <p class="price">{formatPrice(property.price)}</p>
+                        { pricePerM2 && (
+                            <p class="price-sub">{formatPrice(pricePerM2)} / m² · gastos no incluidos</p>
+                        ) }
+
+                        <h2 class="visit-title">Solicita una visita</h2>
+                        <form class="visit-form">
+                            <div class="visit-field">
+                                <label for="visit-date">Fecha preferida</label>
+                                <select id="visit-date" name="preferred_date">
+                                    <option value="this-week">Esta semana</option>
+                                    <option value="next-week">La próxima semana</option>
+                                    <option value="this-month">Este mes</option>
+                                    <option value="flexible">Sin preferencia</option>
+                                </select>
+                            </div>
+
+                            <div class="visit-field">
+                                <label class="sr-only" for="visit-name">Tu nombre</label>
+                                <input type="text" id="visit-name" name="name" placeholder="Tu nombre" autocomplete="name" />
+                            </div>
+
+                            <div class="visit-field">
+                                <label class="sr-only" for="visit-contact">Teléfono o correo</label>
+                                <input type="text" id="visit-contact" name="contact" placeholder="Teléfono o correo" autocomplete="email" />
+                            </div>
+
+                            <button type="submit" class="visit-submit">Solicitar visita</button>
+                        </form>
+
+                        { property.agent_phone
+                            ? <a class="visit-call" href={`tel:${property.agent_phone}`}>Llamar al asesor</a>
+                            : <button type="button" class="visit-call">Llamar al asesor</button> }
+
+                        <footer class="agent">
+                            <span class="agent-avatar" aria-hidden="true">
+                                { property.agent_avatar
+                                    ? <img src={property.agent_avatar} alt="" />
+                                    : agentInitials }
+                            </span>
+                            <div>
+                                <p class="agent-name">{property.agent_name}</p>
+                                <p class="agent-role">Asesor rural · {property.zone}</p>
+                            </div>
+                        </footer>
+                    </div>
+
+                    <p class="listing-meta">
+                        Ref. {property.reference}
+                        { property.published_at && ` · Publicado ${timeAgo(property.published_at)}` }
+                    </p>
+                </aside>
+            </section>
+        </article>
+    </main>
+</body>
+</html>
+
+<style>
+    .property-detail {
+        max-width: calc(var(--max-width) + 80px);
+        padding: 24px calc(var(--havre-space-5) * 4) 80px;
+        margin: 0 auto;
+    }
+
+    /* ─── Breadcrumb ─────────────────────────────────────── */
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-bottom: 24px;
+        font-size: var(--havre-text-small);
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-bronze-text);
+    }
+
+    .sep { color: var(--havre-ink-300); }
+
+    .breadcrumb ol {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .breadcrumb li {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--havre-ink-500);
+    }
+
+    .breadcrumb li:not(:last-child)::after {
+        content: "/";
+        color: var(--havre-ink-300);
+    }
+
+    .breadcrumb a { color: var(--havre-ink-500); }
+    .breadcrumb a:hover { color: var(--havre-bronze-text); }
+    .breadcrumb [aria-current="page"] { color: var(--havre-ink-700); }
+
+    /* ─── Gallery ────────────────────────────────────────── */
+    .gallery {
+        display: grid;
+        grid-template-columns: 1.65fr 1fr;
+        gap: 12px;
+        height: 480px;
+        margin-bottom: 40px;
+    }
+
+    .gallery-main {
+        position: relative;
+        height: 100%;
+        margin: 0;
+        border-radius: var(--havre-radius-xl);
+        overflow: hidden;
+        background:
+            linear-gradient(rgba(46, 42, 32, 0) 55%, rgba(46, 42, 32, 0.55) 100%),
+            var(--img, repeating-linear-gradient(135deg, #E9EDC9 0 14px, #E1E6BC 14px 28px)) center / cover no-repeat;
+    }
+
+    .gallery-tag {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        font-size: var(--havre-text-label);
+        font-weight: var(--havre-weight-semibold);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--havre-ink-900);
+        background: var(--havre-cornsilk);
+        padding: 6px 14px;
+        border-radius: var(--havre-radius-full);
+    }
+
+    .gallery-caption {
+        position: absolute;
+        bottom: 22px;
+        left: 26px;
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-subtitle);
+        color: var(--havre-cornsilk);
+    }
+
+    .gallery-counter {
+        position: absolute;
+        bottom: 24px;
+        right: 26px;
+        font-family: var(--havre-font-mono);
+        font-size: var(--havre-text-small);
+        color: rgba(254, 250, 224, 0.8);
+    }
+
+    .gallery-thumbs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 12px;
+        height: 100%;
+    }
+
+    .gallery-thumb {
+        position: relative;
+        border: none;
+        border-radius: var(--havre-radius-lg);
+        overflow: hidden;
+        cursor: pointer;
+        background:
+            linear-gradient(rgba(46, 42, 32, 0) 55%, rgba(46, 42, 32, 0.5) 100%),
+            var(--img, repeating-linear-gradient(135deg, #D9DEC2 0 12px, #CFD6B2 12px 24px)) center / cover no-repeat;
+        transition: filter 0.15s ease;
+    }
+
+    .gallery-thumb:hover { filter: brightness(0.95); }
+
+    .thumb-caption {
+        position: absolute;
+        bottom: 12px;
+        left: 14px;
+        font-size: var(--havre-text-label);
+        color: var(--havre-cornsilk);
+    }
+
+    .thumb-more {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: var(--havre-text-subtitle);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-white);
+        background: rgba(46, 42, 32, 0.55);
+    }
+
+    /* ─── Detail layout ──────────────────────────────────── */
+    .detail {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 56px;
+        align-items: start;
+    }
+
+    .property-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 24px;
+    }
+
+    .eyebrow {
+        margin: 0 0 10px;
+        font-family: var(--havre-font-mono);
+        font-size: var(--havre-text-label);
+        letter-spacing: var(--havre-tracking-eyebrow);
+        text-transform: uppercase;
+        color: var(--havre-ink-300);
+    }
+
+    .property-head h1 {
+        margin: 0;
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-h1);
+        font-weight: var(--havre-weight-semibold);
+        line-height: var(--havre-leading-heading);
+        color: var(--havre-ink-900);
+    }
+
+    .property-actions {
+        display: flex;
+        flex-shrink: 0;
+        gap: 10px;
+    }
+
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 18px;
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-700);
+        background: var(--havre-white);
+        border: 1px solid var(--havre-border-card);
+        border-radius: var(--havre-radius-md);
+        cursor: pointer;
+        transition: background 0.12s ease;
+    }
+
+    .action-btn:hover { background: var(--havre-surface); }
+    .action-btn svg { width: 18px; height: 18px; }
+
+    .divider {
+        border: none;
+        border-top: 1px solid var(--havre-divider);
+        margin: 28px 0;
+    }
+
+    .specs {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 14px;
+        list-style: none;
+        margin: 0 0 48px;
+        padding: 0;
+    }
+
+    .spec {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: var(--havre-white);
+        border: 1px solid var(--havre-border-card);
+        border-radius: var(--havre-radius-lg);
+        padding: 18px;
+    }
+
+    .spec-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 40px;
+        height: 40px;
+        border-radius: var(--havre-radius-md);
+        background: var(--havre-papaya);
+        color: var(--havre-bronze-text);
+    }
+
+    .spec-icon svg { width: 22px; height: 22px; }
+
+    .spec-value {
+        margin: 0;
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-h3);
+        font-weight: var(--havre-weight-semibold);
+        line-height: 1.1;
+        color: var(--havre-ink-900);
+    }
+
+    .spec-label {
+        margin: 2px 0 0;
+        font-size: var(--havre-text-label);
+        color: var(--havre-ink-500);
+    }
+
+    .about h2 {
+        margin: 0 0 16px;
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-h2);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-900);
+    }
+
+    .about p {
+        margin: 0;
+        font-size: var(--havre-text-body);
+        line-height: var(--havre-leading-body);
+        color: var(--havre-ink-700);
+    }
+
+    /* ─── Sidebar ────────────────────────────────────────── */
+    .sidebar {
+        position: sticky;
+        top: 24px;
+    }
+
+    .visit-card {
+        background: var(--havre-white);
+        border: 1px solid var(--havre-border-card);
+        border-radius: var(--havre-radius-2xl);
+        box-shadow: var(--havre-shadow-sm);
+        padding: 28px;
+    }
+
+    .price-label {
+        margin: 0 0 6px;
+        font-family: var(--havre-font-mono);
+        font-size: var(--havre-text-small);
+        color: var(--havre-ink-500);
+    }
+
+    .price {
+        margin: 0 0 6px;
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-h1);
+        font-weight: var(--havre-weight-semibold);
+        line-height: 1;
+        color: var(--havre-ink-900);
+    }
+
+    .price-sub {
+        margin: 0;
+        font-size: var(--havre-text-small);
+        color: var(--havre-ink-500);
+    }
+
+    .visit-title {
+        margin: 24px 0 18px;
+        padding-top: 24px;
+        border-top: 1px solid var(--havre-divider);
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-h3);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-900);
+    }
+
+    .visit-form {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .visit-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .visit-field label {
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-700);
+    }
+
+    .visit-field select,
+    .visit-field input {
+        width: 100%;
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-body);
+        color: var(--havre-ink-900);
+        background: var(--havre-white);
+        border: 1px solid var(--havre-border-input);
+        border-radius: var(--havre-radius-md);
+        padding: 12px 14px;
+        outline: none;
+        transition: border-color 0.12s ease, box-shadow 0.12s ease;
+    }
+
+    .visit-field input::placeholder { color: var(--havre-ink-300); }
+
+    .visit-field select:focus,
+    .visit-field input:focus {
+        border-color: var(--havre-bronze-default);
+        box-shadow: 0 0 0 3px var(--havre-bronze-ring);
+    }
+
+    .visit-submit,
+    .visit-call {
+        display: block;
+        width: 100%;
+        text-align: center;
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-body);
+        font-weight: var(--havre-weight-semibold);
+        border: none;
+        border-radius: var(--havre-radius-md);
+        padding: 14px;
+        cursor: pointer;
+        transition: background 0.12s ease;
+    }
+
+    .visit-submit {
+        margin-top: 2px;
+        background: var(--havre-bronze-default);
+        color: var(--havre-white);
+    }
+
+    .visit-submit:hover { background: var(--havre-bronze-hover); }
+
+    .visit-call {
+        margin-top: 10px;
+        background: var(--havre-papaya);
+        color: var(--havre-ink-900);
+    }
+
+    .visit-call:hover { background: var(--havre-bronze-soft); }
+
+    .agent {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-top: 24px;
+        padding-top: 22px;
+        border-top: 1px solid var(--havre-divider);
+    }
+
+    .agent-avatar {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 46px;
+        height: 46px;
+        border-radius: var(--havre-radius-full);
+        background-image: repeating-linear-gradient(135deg, #B3BA8A 0 9px, #A7AE7D 9px 18px);
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-white);
+        overflow: hidden;
+    }
+
+    .agent-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .agent-name {
+        margin: 0;
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-subtitle);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-900);
+    }
+
+    .agent-role {
+        margin: 2px 0 0;
+        font-size: var(--havre-text-small);
+        color: var(--havre-ink-500);
+    }
+
+    .listing-meta {
+        margin: 16px 0 0;
+        text-align: right;
+        font-family: var(--havre-font-mono);
+        font-size: var(--havre-text-label);
+        color: var(--havre-ink-300);
+    }
+
+    /* ─── Features ───────────────────────────────────────── */
+    .features {
+        margin-bottom: 48px;
+    }
+
+    .features h2,
+    .zone-block h2 {
+        margin: 0 0 24px;
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-h2);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-900);
+    }
+
+    .features ul {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px 24px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .features li {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: var(--havre-text-body);
+        color: var(--havre-ink-700);
+    }
+
+    .feature-check {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 26px;
+        height: 26px;
+        border-radius: var(--havre-radius-full);
+        background: var(--havre-sage-soft);
+        color: var(--havre-success);
+    }
+
+    /* ─── Zone map ───────────────────────────────────────── */
+    .zone-map {
+        position: relative;
+        height: 360px;
+        border-radius: var(--havre-radius-xl);
+        overflow: hidden;
+        background:
+            linear-gradient(rgba(101, 114, 70, 0.12), rgba(101, 114, 70, 0.32)),
+            repeating-linear-gradient(125deg, #CCD5AE 0 18px, #C3CDA1 18px 36px);
+    }
+
+    .zone-pin {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 18px;
+        background: var(--havre-white);
+        border-radius: var(--havre-radius-full);
+        box-shadow: var(--havre-shadow-sm);
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-900);
+    }
+
+    .zone-pin svg { width: 18px; height: 18px; color: var(--havre-bronze-text); }
+
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    /* ─── Responsive ─────────────────────────────────────── */
+    @media (max-width: 900px) {
+        .property-detail { padding: 20px 20px 64px; }
+
+        .gallery {
+            grid-template-columns: 1fr;
+            height: 360px;
+        }
+
+        .gallery-thumbs { display: none; }
+
+        .detail {
+            grid-template-columns: 1fr;
+            gap: 40px;
+        }
+
+        .sidebar { position: static; }
+
+        .features ul { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 600px) {
+        .gallery { height: 280px; }
+
+        .property-head { flex-wrap: wrap; }
+        .property-head h1 { font-size: var(--havre-text-h2); }
+
+        .features ul { grid-template-columns: 1fr; }
+        .zone-map { height: 240px; }
+    }
+</style>
