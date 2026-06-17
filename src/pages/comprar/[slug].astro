@@ -1,6 +1,7 @@
 ---
 import Header from "../../components/Header.astro"
 import ArrowLeft from "../../components/icons/ArrowLeft.astro"
+import ArrowRight from "../../components/icons/ArrowRight.astro"
 import Heart from "../../components/icons/Heart.astro"
 import Share from "../../components/icons/Share.astro"
 import Bed from "../../components/icons/Bed.astro"
@@ -94,6 +95,9 @@ const metaDescription = (property.description?.trim()
                     <span class="gallery-tag">{tagLabels[property.tag] ?? "En venta"}</span>
                     { cover?.caption && <figcaption class="gallery-caption">{cover.caption}</figcaption> }
                     { totalImgs > 0 && <span class="gallery-counter">1 / {totalImgs}</span> }
+                    { totalImgs > 0 && (
+                        <button type="button" class="gallery-open" data-lb-open="0" aria-label="Ver todas las fotos"></button>
+                    ) }
                 </figure>
 
                 { thumbs.length > 0 && (
@@ -103,6 +107,7 @@ const metaDescription = (property.description?.trim()
                                 type="button"
                                 class="gallery-thumb"
                                 style={`--img: url(${img.url})`}
+                                data-lb-open={i + 1}
                                 aria-label={img.caption ?? `Ver imagen ${i + 2}`}
                             >
                                 { img.caption && <span class="thumb-caption">{img.caption}</span> }
@@ -226,9 +231,78 @@ const metaDescription = (property.description?.trim()
                 </aside>
             </section>
         </article>
+
+        { totalImgs > 0 && (
+            <dialog class="lightbox" id="lightbox" aria-label="Galería de fotos">
+                <button type="button" class="lightbox-close" data-lb-close aria-label="Cerrar galería">&times;</button>
+                <button type="button" class="lightbox-nav lightbox-prev" data-lb-prev aria-label="Foto anterior"><ArrowLeft /></button>
+                <figure class="lightbox-stage">
+                    <img id="lb-image" src="" alt="" />
+                    <figcaption class="lightbox-caption" id="lb-caption"></figcaption>
+                </figure>
+                <button type="button" class="lightbox-nav lightbox-next" data-lb-next aria-label="Foto siguiente"><ArrowRight /></button>
+                <span class="lightbox-counter" id="lb-counter"></span>
+            </dialog>
+            <script type="application/json" id="lb-data" set:html={JSON.stringify(property.images.map(i => ({ url: i.url, caption: i.caption })))}></script>
+        ) }
     </main>
 </body>
 </html>
+
+<script>
+    type GalleryImage = { url: string; caption: string | null };
+
+    const dataEl   = document.querySelector<HTMLScriptElement>('#lb-data');
+    const images: GalleryImage[] = dataEl ? JSON.parse(dataEl.textContent || '[]') : [];
+
+    const lightbox  = document.querySelector<HTMLDialogElement>('#lightbox');
+    const lbImage   = document.querySelector<HTMLImageElement>('#lb-image');
+    const lbCaption = document.querySelector<HTMLElement>('#lb-caption');
+    const lbCounter = document.querySelector<HTMLElement>('#lb-counter');
+
+    if (lightbox && lbImage && images.length > 0) {
+        let index = 0;
+
+        const render = () => {
+            const img = images[index];
+            lbImage.src = img.url;
+            lbImage.alt = img.caption ?? '';
+            if (lbCaption) lbCaption.textContent = img.caption ?? '';
+            if (lbCounter) lbCounter.textContent = `${index + 1} / ${images.length}`;
+        };
+
+        const open = (i: number) => {
+            index = (i % images.length + images.length) % images.length;
+            render();
+            lightbox.showModal();
+        };
+
+        const move = (step: number) => {
+            index = (index + step % images.length + images.length) % images.length;
+            render();
+        };
+
+        document.querySelectorAll<HTMLElement>('[data-lb-open]').forEach(el => {
+            el.addEventListener('click', () => open(Number(el.dataset.lbOpen)));
+        });
+
+        document.querySelector('[data-lb-prev]')?.addEventListener('click', () => move(-1));
+        document.querySelector('[data-lb-next]')?.addEventListener('click', () => move(1));
+        document.querySelector('[data-lb-close]')?.addEventListener('click', () => lightbox.close());
+
+        // Close when clicking the backdrop (the dialog element itself).
+        lightbox.addEventListener('click', (event) => {
+            if (event.target === lightbox) lightbox.close();
+        });
+
+        // Arrow-key navigation while the gallery is open.
+        document.addEventListener('keydown', (event) => {
+            if (!lightbox.open) return;
+            if (event.key === 'ArrowLeft')  move(-1);
+            if (event.key === 'ArrowRight') move(1);
+        });
+    }
+</script>
 
 <style>
     .property-detail {
@@ -759,6 +833,110 @@ const metaDescription = (property.description?.trim()
         border: 0;
     }
 
+    /* ─── Lightbox carousel ──────────────────────────────── */
+    .gallery-open {
+        position: absolute;
+        inset: 0;
+        border: none;
+        background: none;
+        cursor: pointer;
+    }
+
+    .lightbox {
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        max-width: none;
+        max-height: none;
+        margin: 0;
+        padding: 0;
+        border: none;
+        background: transparent;
+    }
+
+    .lightbox[open] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .lightbox::backdrop {
+        background: rgba(20, 18, 12, 0.92);
+        backdrop-filter: blur(2px);
+    }
+
+    .lightbox-stage {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        margin: 0;
+        max-width: 86vw;
+    }
+
+    #lb-image {
+        max-width: 86vw;
+        max-height: 78vh;
+        object-fit: contain;
+        border-radius: var(--havre-radius-md);
+    }
+
+    .lightbox-caption {
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-subtitle);
+        color: var(--havre-cornsilk);
+        text-align: center;
+    }
+
+    .lightbox-caption:empty { display: none; }
+
+    .lightbox-nav,
+    .lightbox-close {
+        position: fixed;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--havre-white);
+        background: rgba(255, 255, 255, 0.12);
+        border: none;
+        border-radius: var(--havre-radius-full);
+        cursor: pointer;
+        transition: background 0.12s ease;
+    }
+
+    .lightbox-nav:hover,
+    .lightbox-close:hover { background: rgba(255, 255, 255, 0.24); }
+
+    .lightbox-nav {
+        top: 50%;
+        transform: translateY(-50%);
+        width: 52px;
+        height: 52px;
+    }
+
+    .lightbox-nav svg { width: 22px; height: 22px; }
+    .lightbox-prev { left: 24px; }
+    .lightbox-next { right: 24px; }
+
+    .lightbox-close {
+        top: 22px;
+        right: 24px;
+        width: 44px;
+        height: 44px;
+        font-size: 26px;
+        line-height: 1;
+    }
+
+    .lightbox-counter {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: var(--havre-font-mono);
+        font-size: var(--havre-text-small);
+        color: rgba(254, 250, 224, 0.8);
+    }
+
     /* ─── Responsive ─────────────────────────────────────── */
     @media (max-width: 900px) {
         .property-detail { padding: 20px 20px 64px; }
@@ -788,5 +966,9 @@ const metaDescription = (property.description?.trim()
 
         .features ul { grid-template-columns: 1fr; }
         .zone-map { height: 240px; }
+
+        .lightbox-nav { width: 42px; height: 42px; }
+        .lightbox-prev { left: 12px; }
+        .lightbox-next { right: 12px; }
     }
 </style>
