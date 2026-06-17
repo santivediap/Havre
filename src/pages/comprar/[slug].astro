@@ -1,8 +1,8 @@
 ---
 import Header from "../../components/Header.astro"
+import Footer from "../../components/Footer.astro"
 import ArrowLeft from "../../components/icons/ArrowLeft.astro"
 import ArrowRight from "../../components/icons/ArrowRight.astro"
-import Heart from "../../components/icons/Heart.astro"
 import Share from "../../components/icons/Share.astro"
 import Bed from "../../components/icons/Bed.astro"
 import Bath from "../../components/icons/Bath.astro"
@@ -10,7 +10,8 @@ import Floorplan from "../../components/icons/Floorplan.astro"
 import Sprout from "../../components/icons/Sprout.astro"
 import Check from "../../components/icons/Check.astro"
 import Location from "../../components/icons/Location.astro"
-import { getPropertyBySlug } from "../../services/properties"
+import PropertyCard from "../../components/PropertyCard.astro"
+import { getPropertyBySlug, getSimilarProperties } from "../../services/properties"
 import "../../styles/global.css"
 // Leaflet's stylesheet is safe to import server-side; its JS runs only in the browser script.
 import "leaflet/dist/leaflet.css"
@@ -18,6 +19,9 @@ import "leaflet/dist/leaflet.css"
 const { slug } = Astro.params
 const property = slug ? await getPropertyBySlug(slug) : null
 if (!property) return Astro.redirect('/comprar')
+
+const similar = await getSimilarProperties(property.id)
+const distances = (property.distances ?? []) as { value: number; unit: string; label: string }[]
 
 const tagLabels: Record<string, string> = {
     for_sale: "En venta", new: "Nuevo", reserved: "Reservado", sold: "Vendido",
@@ -131,7 +135,6 @@ const metaDescription = (property.description?.trim()
                             <h1>{property.title}</h1>
                         </div>
                         <div class="property-actions">
-                            <button type="button" class="action-btn"><Heart /> Guardar</button>
                             <button type="button" class="action-btn"><Share /> Compartir</button>
                         </div>
                     </div>
@@ -184,6 +187,17 @@ const metaDescription = (property.description?.trim()
                                   <span class="zone-pin"><Location /> {location}</span>
                               </div>
                         }
+
+                        { distances.length > 0 && (
+                            <ul class="distances" role="list">
+                                { distances.map(d => (
+                                    <li>
+                                        <span class="distance-value">{nf.format(d.value)} {d.unit}</span>
+                                        <span class="distance-label">{d.label}</span>
+                                    </li>
+                                )) }
+                            </ul>
+                        ) }
                     </div>
                 </div>
 
@@ -245,6 +259,18 @@ const metaDescription = (property.description?.trim()
             </section>
         </article>
 
+        { similar.length > 0 && (
+            <section class="similar" aria-labelledby="similar-heading">
+                <div class="similar-head">
+                    <h2 id="similar-heading">Propiedades similares</h2>
+                    <a class="similar-all" href="/comprar">Ver todas →</a>
+                </div>
+                <div class="similar-grid">
+                    { similar.map(p => <PropertyCard {...p} />) }
+                </div>
+            </section>
+        ) }
+
         { totalImgs > 0 && (
             <dialog class="lightbox" id="lightbox" aria-label="Galería de fotos">
                 <button type="button" class="lightbox-close" data-lb-close aria-label="Cerrar galería">&times;</button>
@@ -259,6 +285,8 @@ const metaDescription = (property.description?.trim()
             <script type="application/json" id="lb-data" set:html={JSON.stringify(property.images.map(i => ({ url: i.url, caption: i.caption })))}></script>
         ) }
     </main>
+
+    <Footer/>
 </body>
 </html>
 
@@ -624,7 +652,7 @@ const metaDescription = (property.description?.trim()
     /* ─── Sidebar ────────────────────────────────────────── */
     .sidebar {
         position: sticky;
-        top: 24px;
+        top: 90px;
     }
 
     .visit-card {
@@ -864,6 +892,69 @@ const metaDescription = (property.description?.trim()
 
     .zone-pin svg { width: 18px; height: 18px; color: var(--havre-bronze-text); }
 
+    .distances {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px 36px;
+        list-style: none;
+        margin: 24px 0 0;
+        padding: 0;
+    }
+
+    .distances li {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+    }
+
+    .distance-value {
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-h3);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-link);
+    }
+
+    .distance-label {
+        font-size: var(--havre-text-small);
+        color: var(--havre-ink-500);
+    }
+
+    /* ─── Similar properties ─────────────────────────────── */
+    .similar {
+        margin-top: 56px;
+        padding-top: 48px;
+        border-top: 1px solid var(--havre-divider);
+    }
+
+    .similar-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 32px;
+    }
+
+    .similar-head h2 {
+        margin: 0;
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-h1);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-900);
+    }
+
+    .similar-all {
+        flex-shrink: 0;
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-bronze-text);
+    }
+
+    .similar-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+    }
+
     .sr-only {
         position: absolute;
         width: 1px;
@@ -999,9 +1090,14 @@ const metaDescription = (property.description?.trim()
         .sidebar { position: static; }
 
         .features ul { grid-template-columns: 1fr 1fr; }
+        .similar-grid { grid-template-columns: 1fr 1fr; }
     }
 
     @media (max-width: 600px) {
+        .distances {
+            justify-content: center;
+        }
+
         .gallery { height: 280px; }
 
         .property-head { flex-wrap: wrap; }
@@ -1009,6 +1105,7 @@ const metaDescription = (property.description?.trim()
 
         .features ul { grid-template-columns: 1fr; }
         .zone-map { height: 240px; }
+        .similar-grid { grid-template-columns: 1fr; }
 
         .lightbox-nav { width: 42px; height: 42px; }
         .lightbox-prev { left: 12px; }

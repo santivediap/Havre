@@ -1,4 +1,4 @@
-import { eq, and, asc, desc, notInArray } from 'drizzle-orm';
+import { eq, ne, and, asc, desc, notInArray } from 'drizzle-orm';
 import { db, properties, propertyImages, zones, countries, users } from '../db';
 import { deleteImage } from '../lib/cloudinary';
 
@@ -215,6 +215,38 @@ export async function getFeaturedProperties(limit = 6) {
             eq(properties.status, 'published'),
         ))
         .orderBy(desc(properties.created_at))
+        .limit(limit);
+}
+
+// Other published properties to suggest on a detail page, with cover image.
+export async function getSimilarProperties(excludeId: string, limit = 3) {
+    return db
+        .select({
+            id:            properties.id,
+            title:         properties.title,
+            slug:          properties.slug,
+            tag:           properties.tag,
+            price:         properties.price,
+            n_beds:        properties.n_beds,
+            n_baths:       properties.n_baths,
+            m_built:       properties.m_built,
+            terrain_space: properties.terrain_space,
+            zone:          zones.name,
+            country:       countries.name,
+            image_url:     propertyImages.url,
+        })
+        .from(properties)
+        .innerJoin(zones, eq(properties.zone_id, zones.id))
+        .innerJoin(countries, eq(zones.country_id, countries.id))
+        .leftJoin(propertyImages, and(
+            eq(propertyImages.property_id, properties.id),
+            eq(propertyImages.is_cover, true),
+        ))
+        .where(and(
+            eq(properties.status, 'published'),
+            ne(properties.id, excludeId),
+        ))
+        .orderBy(desc(properties.is_featured), desc(properties.created_at))
         .limit(limit);
 }
 

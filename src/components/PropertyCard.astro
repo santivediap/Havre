@@ -1,0 +1,146 @@
+---
+interface Props {
+    slug:           string
+    tag:            string
+    zone:           string
+    country:        string
+    title:          string
+    price:          number
+    n_beds:         number
+    n_baths:        number
+    m_built:        number
+    terrain_space?: string | number | null
+    image_url?:     string | null
+}
+
+const { slug, tag, zone, country, title, price, n_beds, n_baths, m_built, terrain_space = null, image_url = null } = Astro.props
+
+const tagLabels: Record<string, string> = {
+    for_sale: "EN VENTA", new: "NUEVO", reserved: "RESERVADO", sold: "VENDIDO",
+}
+
+const nf = new Intl.NumberFormat('es-ES')
+const specs = [
+    `${n_beds} hab.`,
+    `${n_baths} baños`,
+    `${m_built} m²`,
+    ...(terrain_space ? [`${nf.format(Number(terrain_space))} ha`] : []),
+]
+---
+
+<article class="property">
+    <a class="property-image" href={`/comprar/${slug}`} style={image_url ? `--img: url(${image_url})` : undefined} aria-label={title}>
+        <span class="property-tag">{tagLabels[tag] ?? "EN VENTA"}</span>
+    </a>
+
+    <div class="property-info">
+        <p class="property-location">{`${zone}, ${country}`.toUpperCase()}</p>
+        <h3 class="property-title">{title}</h3>
+        <ul class="property-specs">
+            { specs.map(spec => <li class="property-spec">{spec}</li>) }
+        </ul>
+        <div class="property-footer">
+            <p class="property-price">€ {nf.format(price)}</p>
+            <a class="property-link" href={`/comprar/${slug}`}>Ver ficha →</a>
+        </div>
+    </div>
+</article>
+
+<style>
+    .property {
+        background-color: var(--havre-white);
+        border: 1px solid var(--havre-border-card);
+        border-radius: var(--havre-radius-lg);
+        box-shadow: var(--havre-shadow-sm);
+        transition: all ease-in 0.15s;
+        overflow: hidden;
+    }
+
+    .property:hover {
+        transform: translateY(-3px);
+    }
+
+    .property-image {
+        display: block;
+        position: relative;
+        height: 210px;
+        background: var(--img, repeating-linear-gradient(135deg, #E9EDC9 0 14px, #E1E6BC 14px 28px)) center / cover no-repeat;
+    }
+
+    .property-tag {
+        position: absolute;
+        top: 14px;
+        left: 14px;
+        margin: 0;
+        font-size: var(--havre-text-label);
+        font-weight: var(--havre-weight-semibold);
+        letter-spacing: 0.04em;
+        color: var(--havre-ink-900);
+        background-color: var(--havre-cornsilk);
+        padding: var(--havre-space-3) var(--havre-space-6);
+        border-radius: var(--havre-radius-full);
+    }
+
+    .property-info {
+        padding: 22px;
+    }
+
+    .property-location {
+        margin: 0 0 6px;
+        font-family: var(--havre-font-mono);
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        color: var(--havre-ink-300);
+    }
+
+    .property-title {
+        margin: 0 0 14px;
+        font-family: var(--havre-font-serif);
+        font-size: 27px;
+        font-weight: var(--havre-weight-semibold);
+        line-height: 1.08;
+        color: var(--havre-ink-900);
+    }
+
+    .property-specs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        list-style: none;
+        margin: 0 0 18px;
+        padding: 0;
+    }
+
+    .property-spec {
+        font-size: var(--havre-text-label);
+        font-weight: var(--havre-weight-medium);
+        color: var(--havre-ink-700);
+        background-color: var(--havre-chip-bg);
+        border: 1px solid var(--havre-chip-border);
+        padding: 5px 11px;
+        border-radius: var(--havre-radius-sm);
+    }
+
+    .property-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 16px;
+        border-top: 1px solid var(--havre-divider);
+    }
+
+    .property-price {
+        margin: 0;
+        font-family: var(--havre-font-serif);
+        font-size: 25px;
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-bronze-text);
+    }
+
+    .property-link {
+        font-size: 13px;
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-bronze-text);
+        white-space: nowrap;
+    }
+</style>
