@@ -13,7 +13,6 @@ import Location from "../../components/icons/Location.astro"
 import PropertyCard from "../../components/PropertyCard.astro"
 import { getPropertyBySlug, getSimilarProperties } from "../../services/properties"
 import "../../styles/global.css"
-// Leaflet's stylesheet is safe to import server-side; its JS runs only in the browser script.
 import "leaflet/dist/leaflet.css"
 
 const { slug } = Astro.params
@@ -354,6 +353,8 @@ const metaDescription = (property.description?.trim()
 
         const map = L.map(mapEl, {
             scrollWheelZoom: false,
+            dragging: false,        // view only — the map can be zoomed but not panned
+            keyboard: false,
             attributionControl: true,
         }).setView([lat, lng], 13);
 
@@ -644,6 +645,7 @@ const metaDescription = (property.description?.trim()
 
     .about p {
         margin: 0;
+        margin-bottom: 40px;
         font-size: var(--havre-text-body);
         line-height: var(--havre-leading-body);
         color: var(--havre-ink-700);
