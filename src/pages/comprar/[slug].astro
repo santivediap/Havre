@@ -12,6 +12,8 @@ import Check from "../../components/icons/Check.astro"
 import Location from "../../components/icons/Location.astro"
 import { getPropertyBySlug } from "../../services/properties"
 import "../../styles/global.css"
+// Leaflet's stylesheet is safe to import server-side; its JS runs only in the browser script.
+import "leaflet/dist/leaflet.css"
 
 const { slug } = Astro.params
 const property = slug ? await getPropertyBySlug(slug) : null
@@ -55,6 +57,7 @@ const totalImgs = property.images.length
 const extraImgs = totalImgs - 5
 
 const location = `${property.zone}, ${property.country}`
+const hasCoords = property.latitude != null && property.longitude != null
 const indexable = property.status === 'published'
 const metaDescription = (property.description?.trim()
     || `${property.title} en ${location}. ${property.n_beds} habitaciones, ${property.n_baths} baños y ${property.m_built} m² construidos.`
@@ -168,9 +171,19 @@ const metaDescription = (property.description?.trim()
 
                     <div class="zone-block" aria-labelledby="zone-heading">
                         <h2 id="zone-heading">La zona</h2>
-                        <div class="zone-map">
-                            <span class="zone-pin"><Location /> {location}</span>
-                        </div>
+                        { hasCoords
+                            ? <div
+                                  id="zone-map"
+                                  class="zone-map"
+                                  role="application"
+                                  aria-label={`Mapa de la ubicación en ${location}`}
+                                  data-lat={property.latitude}
+                                  data-lng={property.longitude}
+                              ></div>
+                            : <div class="zone-map zone-map--placeholder">
+                                  <span class="zone-pin"><Location /> {location}</span>
+                              </div>
+                        }
                     </div>
                 </div>
 
@@ -250,6 +263,8 @@ const metaDescription = (property.description?.trim()
 </html>
 
 <script>
+    import L from 'leaflet';
+
     type GalleryImage = { url: string; caption: string | null };
 
     const dataEl   = document.querySelector<HTMLScriptElement>('#lb-data');
@@ -301,6 +316,34 @@ const metaDescription = (property.description?.trim()
             if (event.key === 'ArrowLeft')  move(-1);
             if (event.key === 'ArrowRight') move(1);
         });
+    }
+
+    // ── Approximate-location map ─────────────────────────────
+    const mapEl = document.getElementById('zone-map');
+    if (mapEl) {
+        const lat = Number(mapEl.dataset.lat);
+        const lng = Number(mapEl.dataset.lng);
+
+        const map = L.map(mapEl, {
+            scrollWheelZoom: false,
+            attributionControl: true,
+        }).setView([lat, lng], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            maxZoom: 18,
+        }).addTo(map);
+
+        // Show an approximate area instead of the exact spot (rural privacy).
+        const area = L.circle([lat, lng], {
+            radius: 800,
+            color: '#A9743F',
+            weight: 1.5,
+            fillColor: '#D4A373',
+            fillOpacity: 0.2,
+        }).addTo(map);
+
+        map.fitBounds(area.getBounds(), { padding: [24, 24] });
     }
 </script>
 
@@ -970,5 +1013,13 @@ const metaDescription = (property.description?.trim()
         .lightbox-nav { width: 42px; height: 42px; }
         .lightbox-prev { left: 12px; }
         .lightbox-next { right: 12px; }
+    }
+</style>
+
+<!-- Leaflet renders its container outside the component, so it needs global rules. -->
+<style is:global>
+    .zone-map .leaflet-container {
+        font-family: var(--havre-font-sans);
+        border-radius: var(--havre-radius-xl);
     }
 </style>
