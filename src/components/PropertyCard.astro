@@ -1,4 +1,6 @@
 ---
+import ArrowRight from './icons/ArrowRight.astro'
+
 interface Props {
     slug:           string
     tag:            string
@@ -41,7 +43,7 @@ const specs = [
         </ul>
         <div class="property-footer">
             <p class="property-price">€ {nf.format(price)}</p>
-            <a class="property-link" href={`/comprar/${slug}`}>Ver ficha →</a>
+            <a class="property-link" href={`/comprar/${slug}`}>Ver ficha <ArrowRight/></a>
         </div>
     </div>
 </article>
@@ -138,6 +140,9 @@ const specs = [
     }
 
     .property-link {
+        display: flex;
+        align-items: center;
+        gap: 10px;
         font-size: 13px;
         font-weight: var(--havre-weight-semibold);
         color: var(--havre-bronze-text);
