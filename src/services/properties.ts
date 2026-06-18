@@ -1,4 +1,4 @@
-import { eq, ne, and, asc, desc, notInArray } from 'drizzle-orm';
+import { eq, ne, and, asc, desc, gte, lte, notInArray } from 'drizzle-orm';
 import { db, properties, propertyImages, zones, countries, users } from '../db';
 import { deleteImage } from '../lib/cloudinary';
 
@@ -215,6 +215,64 @@ export async function getFeaturedProperties(limit = 6) {
             eq(properties.status, 'published'),
         ))
         .orderBy(desc(properties.created_at))
+        .limit(limit);
+}
+
+export interface PropertyFilters {
+    zone?:     string;   // zone slug
+    priceMin?: number;
+    priceMax?: number;
+    builtMin?: number;   // minimum m² built
+    bedsMin?:  number;   // minimum bedrooms
+    sort?:     'featured' | 'price-asc' | 'price-desc' | 'newest';
+}
+
+// Published properties matching the given filters, for the public listing + map.
+// Filtering happens in the DB so the limit applies to the *matching* set, with
+// cover image, coordinates and zone/country.
+export async function searchProperties(filters: PropertyFilters = {}, limit = 40) {
+    const conditions = [eq(properties.status, 'published')];
+    if (filters.zone)              conditions.push(eq(zones.slug, filters.zone));
+    if (filters.priceMin != null)  conditions.push(gte(properties.price, filters.priceMin));
+    if (filters.priceMax != null)  conditions.push(lte(properties.price, filters.priceMax));
+    if (filters.builtMin != null)  conditions.push(gte(properties.m_built, filters.builtMin));
+    if (filters.bedsMin != null)   conditions.push(gte(properties.n_beds, filters.bedsMin));
+
+    const orderBy =
+        filters.sort === 'price-asc'  ? [asc(properties.price)] :
+        filters.sort === 'price-desc' ? [desc(properties.price)] :
+        filters.sort === 'newest'     ? [desc(properties.created_at)] :
+                                        [desc(properties.is_featured), desc(properties.created_at)];
+
+    return db
+        .select({
+            id:            properties.id,
+            title:         properties.title,
+            slug:          properties.slug,
+            tag:           properties.tag,
+            price:         properties.price,
+            n_beds:        properties.n_beds,
+            n_baths:       properties.n_baths,
+            m_built:       properties.m_built,
+            terrain_space: properties.terrain_space,
+            latitude:      properties.latitude,
+            longitude:     properties.longitude,
+            is_featured:   properties.is_featured,
+            created_at:    properties.created_at,
+            zone:          zones.name,
+            zone_slug:     zones.slug,
+            country:       countries.name,
+            image_url:     propertyImages.url,
+        })
+        .from(properties)
+        .innerJoin(zones, eq(properties.zone_id, zones.id))
+        .innerJoin(countries, eq(zones.country_id, countries.id))
+        .leftJoin(propertyImages, and(
+            eq(propertyImages.property_id, properties.id),
+            eq(propertyImages.is_cover, true),
+        ))
+        .where(and(...conditions))
+        .orderBy(...orderBy)
         .limit(limit);
 }
 
