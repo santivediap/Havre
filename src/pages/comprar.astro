@@ -2,67 +2,77 @@
 import Header from "../components/Header.astro"
 import Footer from "../components/Footer.astro"
 import "../styles/global.css"
+import "leaflet/dist/leaflet.css"
 import ArrowRight from "../components/icons/ArrowRight.astro"
+import Search from "../components/icons/Search.astro"
+import { searchProperties, type PropertyFilters } from "../services/properties"
+import { getZones } from "../services/zones"
 
-const properties = [
-    {
-        tag:      "EN VENTA",
-        location: "Toscana, Italia",
-        title:    "Masía entre olivares",
-        specs:    ["4 hab.", "2 baños", "320 m²"],
-        price:    "685.000",
-        slug:     "masia-entre-olivares",
-    },
-    {
-        tag:      "NUEVO",
-        location: "Provenza, Francia",
-        title:    "Casa de piedra con viñedo",
-        specs:    ["5 hab.", "3 baños", "410 m²"],
-        price:    "920.000",
-        slug:     "casa-de-piedra-con-vinedo",
-    },
-    {
-        tag:      "DESTACADO",
-        location: "Pirineos, España",
-        title:    "Cortijo restaurado",
-        specs:    ["3 hab.", "2 baños", "240 m²"],
-        price:    "540.000",
-        slug:     "cortijo-restaurado",
-    },
-    {
-        tag:      "EN VENTA",
-        location: "Alentejo, Portugal",
-        title:    "Quinta con naranjos",
-        specs:    ["6 hab.", "4 baños", "520 m²"],
-        price:    "1.150.000",
-        slug:     "quinta-con-naranjos",
-    },
-    {
-        tag:      "NUEVO",
-        location: "Umbría, Italia",
-        title:    "Casale entre colinas",
-        specs:    ["4 hab.", "3 baños", "300 m²"],
-        price:    "795.000",
-        slug:     "casale-entre-colinas",
-    },
-    {
-        tag:      "EN VENTA",
-        location: "Empordà, España",
-        title:    "Casa rural de piedra",
-        specs:    ["3 hab.", "2 baños", "280 m²"],
-        price:    "620.000",
-        slug:     "casa-rural-de-piedra",
-    },
-]
+// ── Read the filter state from the URL (shareable, server-side filtered) ──
+const params = Astro.url.searchParams
+const toInt = (v: string | null) => {
+    const n = parseInt(v ?? '', 10)
+    return Number.isFinite(n) ? n : undefined
+}
+
+const selZone    = params.get('zona')  ?? ''
+const selMin     = toInt(params.get('min'))
+const selMax     = toInt(params.get('max'))
+const selTerreno = toInt(params.get('terreno'))
+const selHabs    = toInt(params.get('habs'))
+const sortOptions = ['featured', 'price-asc', 'price-desc', 'newest'] as const
+const selOrder    = (sortOptions as readonly string[]).includes(params.get('order') ?? '')
+    ? params.get('order') as PropertyFilters['sort']
+    : 'featured'
+
+const filters: PropertyFilters = {
+    zone:     selZone || undefined,
+    priceMin: selMin,
+    priceMax: selMax,
+    builtMin: selTerreno,
+    bedsMin:  selHabs,
+    sort:     selOrder,
+}
+
+const [propertyList, zoneList] = await Promise.all([
+    searchProperties(filters, 40),
+    getZones(),
+])
+
+const tagLabels: Record<string, string> = {
+    for_sale: "EN VENTA", new: "NUEVO", reserved: "RESERVADO", sold: "VENDIDO",
+}
+
+const nf = new Intl.NumberFormat('es-ES')
+
+// ── Dynamic SEO: a zone-filtered view gets its own title/description ──
+const activeZone = selZone ? zoneList.find(z => z.slug === selZone) : null
+// A zone-only view is a worthwhile landing page; richer filter combos are noindex.
+const noindex = [...params.keys()].some(k => k !== 'zona')
+const pageTitle = activeZone
+    ? `Casas rurales en venta en ${activeZone.name} | Havre`
+    : "Comprar casa rural — Propiedades en venta | Havre"
+const pageDescription = activeZone
+    ? `Descubre casas de campo, masías y fincas en venta en ${activeZone.name}, ${activeZone.country}. Acompañamiento personal de principio a fin.`
+    : "Explora más de 340 casas de campo, masías, fincas y cortijos en venta en Toscana, Provenza, Pirineos, Alentejo y Empordà."
+const canonical = activeZone ? `/comprar?zona=${activeZone.slug}` : "/comprar"
+
+// Lightweight points (only those with coordinates) for the Leaflet map.
+const mapPoints = propertyList
+    .filter(p => p.latitude != null && p.longitude != null)
+    .map(p => ({
+        id:    p.id,
+        slug:  p.slug,
+        title: p.title,
+        price: p.price,
+        image: p.image_url,
+        lat:   Number(p.latitude),
+        lng:   Number(p.longitude),
+    }))
 
 const zones = [
-    { label: "Todas las zonas", value: ""          },
-    { label: "Toscana",         value: "toscana"   },
-    { label: "Provenza",        value: "provenza"  },
-    { label: "Pirineos",        value: "pirineos"  },
-    { label: "Alentejo",        value: "alentejo"  },
-    { label: "Umbría",          value: "umbria"    },
-    { label: "Empordà",         value: "emporda"   },
+    { label: "Todas las zonas", value: "" },
+    ...zoneList.map(z => ({ label: z.name, value: z.slug })),
 ]
 
 const pricesMin = [
@@ -113,8 +123,10 @@ const sortOpts = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comprar casa rural — Propiedades en venta | Havre</title>
-    <meta name="description" content="Explora más de 340 casas de campo, masías, fincas y cortijos en venta en Toscana, Provenza, Pirineos, Alentejo y Empordà.">
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription}>
+    <link rel="canonical" href={canonical}>
+    { noindex && <meta name="robots" content="noindex, follow"> }
 </head>
 <body>
     <Header/>
@@ -125,51 +137,52 @@ const sortOpts = [
                 <div class="filter-group">
                     <label for="filter-zone">ZONA</label>
                     <select id="filter-zone" name="zone">
-                        { zones.map(z => <option value={z.value}>{z.label}</option>) }
+                        { zones.map(z => <option value={z.value} selected={z.value === selZone}>{z.label}</option>) }
                     </select>
                 </div>
 
                 <div class="filter-group">
                     <label for="filter-price-min">DESDE</label>
                     <select id="filter-price-min" name="price-min">
-                        { pricesMin.map(p => <option value={p.value}>{p.label}</option>) }
+                        { pricesMin.map(p => <option value={p.value} selected={p.value === String(selMin ?? 'min')}>{p.label}</option>) }
                     </select>
                 </div>
 
                 <div class="filter-group">
                     <label for="filter-price-max">HASTA</label>
                     <select id="filter-price-max" name="price-max">
-                        { pricesMax.map(p => <option value={p.value}>{p.label}</option>) }
+                        { pricesMax.map(p => <option value={p.value} selected={p.value === String(selMax ?? 'max')}>{p.label}</option>) }
                     </select>
                 </div>
 
                 <div class="filter-group">
                     <label for="filter-surface">M² MÍN.</label>
                     <select id="filter-surface" name="surface">
-                        { surfaces.map(s => <option value={s.value}>{s.label}</option>) }
+                        { surfaces.map(s => <option value={s.value} selected={s.value === String(selTerreno ?? 'any')}>{s.label}</option>) }
                     </select>
                 </div>
 
                 <fieldset class="filter-group">
                     <label for="rooms">HAB.</label>
                     <div class="room-opts">
-                        { roomOpts.map((opt, i) => (
+                        { roomOpts.map(opt => (
                             <label class="room-option">
-                                <input id="rooms" type="radio" name="rooms" value={opt.value} checked={i === 0} />
+                                <input type="radio" name="rooms" value={opt.value} checked={opt.value === String(selHabs ?? '')} />
                                 <span>{opt.label}</span>
                             </label>
                         )) }
                     </div>
                 </fieldset>
-                
+
                 <div class="filters-secondary">
-                    <button type="reset" class="filters-clear">Limpiar filtros</button>
+                    <a href="/comprar" class="filters-clear">Limpiar filtros</a>
                     <div class="filter-group">
                         <label for="filter-sort">ORDEN</label>
                         <select id="filter-sort" name="sort">
-                            { sortOpts.map(o => <option value={o.value}>{o.label}</option>) }
+                            { sortOpts.map(o => <option value={o.value} selected={o.value === selOrder}>{o.label}</option>) }
                         </select>
                     </div>
+                    <button type="submit" class="filters-search"><Search/> Buscar</button>
                 </div>
             </div>
 
@@ -177,47 +190,142 @@ const sortOpts = [
 
         <div class="content-layout">
             <section class="properties-panel" aria-label="Listado de propiedades">
-                <header class="results-header">
-                    <h1>Propiedades en venta <span class="results-count">{properties.length} resultados</span></h1>
-                </header>
+                <div class="results-header">
+                    <h1>
+                        { activeZone ? `Propiedades en ${activeZone.name}` : "Propiedades en venta" }
+                        <span class="results-count">{propertyList.length} {propertyList.length === 1 ? 'resultado' : 'resultados'}</span>
+                    </h1>
+                </div>
 
                 <ul class="properties-grid" role="list">
-                    { properties.map(property => (
+                    { propertyList.map(property => (
                         <li>
                             <article class="property-card">
-                                <div class="property-image">
-                                    <p class="property-tag">{property.tag}</p>
-                                </div>
+                                <a class="property-image" href={`/comprar/${property.slug}`} aria-label={property.title} style={property.image_url ? `--img: url(${property.image_url})` : undefined}>
+                                    <p class="property-tag">{tagLabels[property.tag] ?? "EN VENTA"}</p>
+                                </a>
 
                                 <div class="property-info">
-                                    <p class="property-location">{property.location}</p>
+                                    <p class="property-location">{`${property.zone}, ${property.country}`}</p>
                                     <h2 class="property-title">{property.title}</h2>
 
                                     <ul class="property-specs" role="list">
-                                        { property.specs.map(spec => (
-                                            <li class="property-spec">{spec}</li>
-                                        )) }
+                                        <li class="property-spec">{property.n_beds} hab.</li>
+                                        <li class="property-spec">{property.n_baths} baños</li>
+                                        <li class="property-spec">{property.m_built} m²</li>
+                                        { property.terrain_space && (
+                                            <li class="property-spec">{nf.format(Number(property.terrain_space))} ha</li>
+                                        ) }
                                     </ul>
 
                                     <div class="property-footer">
-                                        <p class="property-price">€ {property.price}</p>
-                                        <a class="property-link" href={`/propiedades/${property.slug}`}>Ver ficha <ArrowRight/></a>
+                                        <p class="property-price">€ {nf.format(property.price)}</p>
+                                        <a class="property-link" href={`/comprar/${property.slug}`}>Ver ficha <ArrowRight/></a>
                                     </div>
                                 </div>
                             </article>
                         </li>
                     )) }
                 </ul>
+
+                { propertyList.length === 0 && (
+                    <div class="no-results">
+                        <p>No hay propiedades que coincidan con tu búsqueda.</p>
+                        <a href="/comprar" class="no-results-reset">Ver todas las propiedades</a>
+                    </div>
+                ) }
             </section>
 
             <aside class="map-panel" aria-label="Mapa de propiedades">
+                <div id="property-map"></div>
             </aside>
         </div>
     </main>
 
+    <script type="application/json" id="map-data" set:html={JSON.stringify(mapPoints).replace(/</g, '\\u003c')}></script>
+
     <Footer/>
 </body>
 </html>
+
+<script>
+    import L from 'leaflet';
+
+    type MapPoint = { id: string; slug: string; title: string; price: number; image: string | null; lat: number; lng: number };
+
+    const dataEl = document.getElementById('map-data');
+    const points: MapPoint[] = dataEl ? JSON.parse(dataEl.textContent || '[]') : [];
+
+    const form  = document.querySelector<HTMLFormElement>('.filters-bar');
+    const mapEl = document.getElementById('property-map');
+
+    const nf = new Intl.NumberFormat('es-ES');
+    const esc = (s: string) => s.replace(/[&<>"]/g, c => (
+        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] as string
+    ));
+
+    // ── Map: render the markers for the (already server-filtered) results ──
+    if (mapEl && points.length > 0) {
+        const map = L.map(mapEl, { scrollWheelZoom: false }).setView([43, 3], 5);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            maxZoom: 18,
+        }).addTo(map);
+
+        const latlngs: L.LatLng[] = [];
+        for (const p of points) {
+            const icon = L.divIcon({
+                className: 'price-marker',
+                iconSize: undefined,
+                html: `<span class="price-pill">€ ${nf.format(p.price)}</span>`,
+            });
+            const marker = L.marker([p.lat, p.lng], { icon }).addTo(map);
+            marker.bindPopup(
+                `<a class="map-popup" href="/comprar/${encodeURIComponent(p.slug)}">` +
+                    (p.image ? `<span class="map-popup-img" style="background-image:url('${esc(p.image)}')"></span>` : '') +
+                    `<span class="map-popup-body">` +
+                        `<span class="map-popup-title">${esc(p.title)}</span>` +
+                        `<span class="map-popup-price">€ ${nf.format(p.price)}</span>` +
+                    `</span>` +
+                `</a>`,
+                { closeButton: false },
+            );
+            latlngs.push(marker.getLatLng());
+        }
+        if (latlngs.length) map.fitBounds(L.latLngBounds(latlngs), { padding: [40, 40], maxZoom: 13 });
+    }
+
+    // ── Search: submit navigates to a clean, shareable URL ──
+    // Defaults are dropped so links stay tidy (e.g. /comprar?zona=toscana).
+    if (form) {
+        const buildUrl = () => {
+            const fd = new FormData(form);
+            const out = new URLSearchParams();
+            const put = (key: string, raw: FormDataEntryValue | null, skip: string[]) => {
+                const v = String(raw ?? '');
+                if (v && !skip.includes(v)) out.set(key, v);
+            };
+            put('zona',    fd.get('zone'),      ['']);
+            put('min',     fd.get('price-min'), ['', 'min']);
+            put('max',     fd.get('price-max'), ['', 'max']);
+            put('terreno', fd.get('surface'),   ['', 'any']);
+            put('habs',    fd.get('rooms'),     ['']);
+            put('order',   fd.get('sort'),      ['', 'featured']);
+            const qs = out.toString();
+            return qs ? `/comprar?${qs}` : '/comprar';
+        };
+
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            location.assign(buildUrl());
+        });
+
+        // Changing the sort applies immediately — it's cheap and expected.
+        const sortSelect = form.querySelector('[name="sort"]') as HTMLSelectElement | null;
+        sortSelect?.addEventListener('change', () => location.assign(buildUrl()));
+    }
+</script>
 
 <style>
     main {
@@ -268,7 +376,28 @@ const sortOpts = [
         color: var(--havre-link);
         font-family: var(--havre-font-sans);
         font-weight: var(--havre-weight-semibold);
+        white-space: nowrap;
     }
+
+    .filters-search {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        padding: 13px 24px;
+        border: none;
+        border-radius: var(--havre-radius-md);
+        background-color: var(--havre-bronze-default);
+        color: var(--havre-white);
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-body);
+        font-weight: var(--havre-weight-semibold);
+        white-space: nowrap;
+        transition: background 0.12s ease;
+    }
+
+    .filters-search:hover { background-color: var(--havre-bronze-hover); }
+    .filters-search svg { width: 18px; height: 18px; }
 
     .filter-group {
         display: flex;
@@ -352,7 +481,30 @@ const sortOpts = [
         position: sticky;
         top: 242px;
         border-radius: var(--havre-radius-xl);
-        padding: 28px 0px 0px;
+        overflow: hidden;
+    }
+
+    #property-map {
+        width: 100%;
+        height: 100%;
+    }
+
+    .no-results {
+        padding: 56px 0;
+        text-align: center;
+    }
+
+    .no-results p {
+        margin: 0 0 16px;
+        font-size: var(--havre-text-body);
+        color: var(--havre-ink-500);
+    }
+
+    .no-results-reset {
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-bronze-text);
+        text-decoration: underline;
     }
 
     .results-header {
@@ -404,9 +556,10 @@ const sortOpts = [
     }
 
     .property-image {
+        display: block;
         position: relative;
         height: 180px;
-        background-image: repeating-linear-gradient(135deg, #E9EDC9 0 14px, #E1E6BC 14px 28px);
+        background: var(--img, repeating-linear-gradient(135deg, #E9EDC9 0 14px, #E1E6BC 14px 28px)) center / cover no-repeat;
     }
 
     .property-tag {
@@ -533,5 +686,80 @@ const sortOpts = [
         .property-image { height: 200px; }
 
         .property-info { padding: 16px; }
+    }
+</style>
+
+<!-- Leaflet renders markers, popups and the container outside the component scope. -->
+<style is:global>
+    #property-map .leaflet-container {
+        font-family: var(--havre-font-sans);
+    }
+
+    /* Reset Leaflet's default div-icon box; the pill provides its own look. */
+    .price-marker.leaflet-div-icon {
+        background: none;
+        border: none;
+        width: auto !important;
+        height: auto !important;
+        margin: 0 !important;
+    }
+
+    .price-pill {
+        display: inline-block;
+        transform: translate(-50%, -50%);
+        padding: 5px 10px;
+        border-radius: var(--havre-radius-full);
+        background: var(--havre-white);
+        border: 1px solid var(--havre-bronze-default);
+        box-shadow: var(--havre-shadow-sm);
+        font-family: var(--havre-font-sans);
+        font-size: 13px;
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-900);
+        white-space: nowrap;
+        cursor: pointer;
+        transition: background 0.12s ease, color 0.12s ease;
+    }
+
+    .price-marker:hover { z-index: 1000 !important; }
+
+    .price-marker:hover .price-pill,
+    .leaflet-marker-icon.leaflet-interactive:focus .price-pill {
+        background: var(--havre-bronze-default);
+        color: var(--havre-white);
+    }
+
+    .leaflet-popup-content-wrapper { border-radius: var(--havre-radius-lg); padding: 0; overflow: hidden; }
+    .leaflet-popup-content { margin: 0; width: 240px !important; }
+
+    .map-popup {
+        display: flex;
+        flex-direction: column;
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .map-popup-img {
+        display: block;
+        height: 130px;
+        background: var(--havre-sage) center / cover no-repeat;
+    }
+
+    .map-popup-body { padding: 12px 14px; }
+
+    .map-popup-title {
+        display: block;
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-subtitle);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-900);
+        line-height: 1.15;
+    }
+
+    .map-popup-price {
+        display: block;
+        margin-top: 4px;
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-bronze-text);
     }
 </style>
