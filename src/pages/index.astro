@@ -76,7 +76,7 @@ const [zoneList, featured] = await Promise.all([getZones(), getFeaturedPropertie
 				<ul class="regions-grid">
 					{ zoneList.map(zone => (
 						<li class="region" style={zone.image_url ? `--img: url(${zone.image_url})` : undefined}>
-							<a href={`/zonas/${zone.slug}`}>
+							<a href={`/comprar?zona=${zone.slug}`}>
 								<h3 class="region-name">{zone.name}</h3>
 								<p class="region-count">{zone.count} propiedades</p>
 							</a>
