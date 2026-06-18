@@ -53,13 +53,13 @@ const formatPrice = (price: number | null) =>
                 { zoneList.map(zone => (
                     <li>
                         <article class="zone-card">
-                            <div class="zone-image" style={zone.image_url ? `--img: url(${zone.image_url})` : undefined}>
+                            <a href={`/comprar?zona=${zone.slug}`} class="zone-image" style={zone.image_url ? `--img: url(${zone.image_url})` : undefined}>
                                 <p class="zone-country">{zone.country}</p>
-                                <footer class="zone-image-footer">
+                                <div class="zone-image-footer">
                                     <h2 class="zone-name">{zone.name}</h2>
                                     <span class="zone-count">{zone.count} propiedades</span>
-                                </footer>
-                            </div>
+                                </div>
+                            </a>
 
                             <div class="zone-body">
                                 <p class="zone-desc">{zone.description}</p>
@@ -72,7 +72,7 @@ const formatPrice = (price: number | null) =>
 
                                 <div class="zone-footer">
                                     <p class="zone-price">Desde <span>€ {formatPrice(zone.price_from)}</span></p>
-                                    <a class="zone-link" href={`/zonas/${zone.slug}`}>Ver propiedades <ArrowRight/></a>
+                                    <a class="zone-link" href={`/comprar?zona=${zone.slug}`}>Ver propiedades <ArrowRight/></a>
                                 </div>
                             </div>
                         </article>
