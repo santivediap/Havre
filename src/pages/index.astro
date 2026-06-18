@@ -7,6 +7,23 @@ import PropertyCard from "../components/PropertyCard.astro"
 import { getZones } from "../services/zones"
 import { getFeaturedProperties } from "../services/properties"
 
+const surfaces = [
+    { label: "Cualquiera", value: "any" },
+    { label: "100 m²",     value: "100" },
+    { label: "300 m²",     value: "300" },
+    { label: "500 m²",     value: "500" }
+]
+
+const pricesMax = [
+    { label: "€ máx.",       value: "max"      },
+    { label: "€ 300.000",    value: "300000"   },
+    { label: "€ 500.000",    value: "500000"   },
+    { label: "€ 750.000",    value: "750000"   },
+    { label: "€ 1.000.000",  value: "1000000"  },
+    { label: "€ 1.500.000",  value: "1500000"  },
+    { label: "€ 2.000.000",  value: "2000000"  },
+]
+
 const [zoneList, featured] = await Promise.all([getZones(), getFeaturedProperties()])
 ---
 
@@ -29,27 +46,24 @@ const [zoneList, featured] = await Promise.all([getZones(), getFeaturedPropertie
 					<h1 class="hero-title">Encuentra tu refugio entre campos dorados.</h1>
 				</div>
 
-				<form class="hero-search-form" action="">
+				<form id="search-form" class="hero-search-form" action="">
 					<div class="input">
 						<label for="zone">ZONA</label>
-						<input type="text" name="zone" id="zone" placeholder="Toscana, Provenza, Pirineos...">
-					</div>
-					<div class="input input--separator">
-						<label for="type">TIPO</label>
-						<select name="type" id="type">
-							<option value="all">Cualquiera</option>
-							<option value="country-house">Casa de campo</option>
-							<option value="farmhouse">Masía / Cortijo</option>
-							<option value="property">Finca con terreno</option>
+						<select name="zone" id="zone">
+							<option value="">Todas las zonas</option>
+							{ zoneList.map(v => <option value={v.slug}>{v.name}</option>) }
 						</select>
 					</div>
 					<div class="input input--separator">
-						<label for="price-max">PRECIO MÁX.</label>
+						<label for="surface">M² MÍN.</label>
+						<select name="surface" id="surface">
+							{ surfaces.map(v => <option value={v.value}>{v.label}</option>) }
+						</select>
+					</div>
+					<div class="input input--separator">
+						<label for="price-max">HASTA</label>
 						<select name="price-max" id="price-max">
-							<option value="">Sin límite</option>
-							<option value="">€ 500.000</option>
-							<option value="">€ 750.000</option>
-							<option value="">€ 1.000.000</option>
+							{ pricesMax.map(v => <option value={v.value}>{v.label}</option>) }
 						</select>
 					</div>
 
@@ -104,6 +118,29 @@ const [zoneList, featured] = await Promise.all([getZones(), getFeaturedPropertie
 		<Footer/>
 	</body>
 </html>
+
+<script>
+	const form = document.getElementById("search-form") as HTMLFormElement;
+
+	const buildUrl = () => {
+		const fd = new FormData(form);
+		const out = new URLSearchParams();
+		const put = (key: string, raw: FormDataEntryValue | null, skip: string[]) => {
+			const v = String(raw ?? '');
+			if (v && !skip.includes(v)) out.set(key, v);
+		};
+		put('zona',    fd.get('zone'),      ['']);
+		put('max',     fd.get('price-max'), ['', 'max']);
+		put('terreno', fd.get('surface'),   ['', 'any']);
+		const qs = out.toString();
+		return qs ? `/comprar?${qs}` : '/comprar';
+	};
+	
+	form.addEventListener("submit", (e) => {
+		e.preventDefault()
+		location.assign(buildUrl());
+	})
+</script>
 
 <style>
   main {

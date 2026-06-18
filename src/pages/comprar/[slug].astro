@@ -90,7 +90,7 @@ const metaDescription = (property.description?.trim()
             <span class="sep" aria-hidden="true">·</span>
             <ol>
                 <li><a href="/comprar">Comprar</a></li>
-                <li><a href={`/zonas/${property.zone_slug}`}>{property.zone}</a></li>
+                <li><a href={`/comprar?zona=${property.zone_slug}`}>{property.zone}</a></li>
                 <li aria-current="page">{property.title}</li>
             </ol>
         </div>
