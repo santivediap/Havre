@@ -345,6 +345,11 @@ const metaDescription = (property.description?.trim()
         });
     }
 
+    // ── Back link: return to the last results URL (with filters) if we have one ──
+    const backLink = document.querySelector<HTMLAnchorElement>('.back-link');
+    const lastResults = sessionStorage.getItem('havre:results-url');
+    if (backLink && lastResults) backLink.href = lastResults;
+
     // ── Approximate-location map ─────────────────────────────
     const mapEl = document.getElementById('zone-map');
     if (mapEl) {

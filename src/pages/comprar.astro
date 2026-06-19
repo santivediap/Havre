@@ -257,6 +257,10 @@ const sortOpts = [
     const form  = document.querySelector<HTMLFormElement>('.filters-bar');
     const mapEl = document.getElementById('property-map');
 
+    // Remember this results URL (with filters) so a property page can offer a
+    // "back to results" link that returns to the exact same search.
+    sessionStorage.setItem('havre:results-url', location.pathname + location.search);
+
     const nf = new Intl.NumberFormat('es-ES');
     const esc = (s: string) => s.replace(/[&<>"]/g, c => (
         { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] as string
