@@ -209,7 +209,7 @@ const metaDescription = (property.description?.trim()
                         ) }
 
                         <h2 class="visit-title">Solicita una visita</h2>
-                        <form class="visit-form">
+                        <form class="visit-form" data-property-id={property.id}>
                             <div class="visit-field">
                                 <label for="visit-date">Fecha preferida</label>
                                 <select id="visit-date" name="preferred_date">
@@ -222,15 +222,16 @@ const metaDescription = (property.description?.trim()
 
                             <div class="visit-field">
                                 <label class="sr-only" for="visit-name">Tu nombre</label>
-                                <input type="text" id="visit-name" name="name" placeholder="Tu nombre" autocomplete="name" />
+                                <input type="text" id="visit-name" name="name" placeholder="Tu nombre" autocomplete="name" required maxlength="100" />
                             </div>
 
                             <div class="visit-field">
                                 <label class="sr-only" for="visit-contact">Teléfono o correo</label>
-                                <input type="text" id="visit-contact" name="contact" placeholder="Teléfono o correo" autocomplete="email" />
+                                <input type="text" id="visit-contact" name="contact" placeholder="Teléfono o correo" autocomplete="email" required maxlength="255" />
                             </div>
 
                             <button type="submit" class="visit-submit">Solicitar visita</button>
+                            <p class="visit-feedback" role="status" aria-live="polite" hidden></p>
                         </form>
 
                         { property.agent_phone
@@ -349,6 +350,64 @@ const metaDescription = (property.description?.trim()
     const backLink = document.querySelector<HTMLAnchorElement>('.back-link');
     const lastResults = sessionStorage.getItem('havre:results-url');
     if (backLink && lastResults) backLink.href = lastResults;
+
+    // ── Visit request: submit the form without leaving the page ──
+    const visitForm = document.querySelector<HTMLFormElement>('.visit-form');
+    if (visitForm) {
+        const feedback = visitForm.querySelector<HTMLElement>('.visit-feedback');
+        const submitBtn = visitForm.querySelector<HTMLButtonElement>('.visit-submit');
+
+        const showFeedback = (message: string, ok: boolean) => {
+            if (!feedback) return;
+            feedback.textContent = message;
+            feedback.classList.toggle('is-error', !ok);
+            feedback.classList.toggle('is-success', ok);
+            feedback.hidden = false;
+        };
+
+        visitForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!submitBtn) return;
+
+            const fd = new FormData(visitForm);
+            const payload = {
+                property_id:    visitForm.dataset.propertyId,
+                name:           String(fd.get('name') ?? '').trim(),
+                contact:        String(fd.get('contact') ?? '').trim(),
+                preferred_date: fd.get('preferred_date'),
+            };
+
+            if (!payload.name || !payload.contact) {
+                showFeedback('Indica tu nombre y un teléfono o correo de contacto.', false);
+                return;
+            }
+
+            submitBtn.disabled = true;
+            const originalLabel = submitBtn.textContent;
+            submitBtn.textContent = 'Enviando…';
+
+            try {
+                const res = await fetch('/api/visit-requests', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify(payload),
+                });
+
+                if (res.ok) {
+                    visitForm.reset();
+                    showFeedback('¡Gracias! Te contactaremos para coordinar la visita.', true);
+                } else {
+                    const data = await res.json().catch(() => null);
+                    showFeedback(data?.error ?? 'No se pudo enviar la solicitud. Inténtalo de nuevo.', false);
+                }
+            } catch {
+                showFeedback('No se pudo enviar la solicitud. Revisa tu conexión.', false);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalLabel;
+            }
+        });
+    }
 
     // ── Approximate-location map ─────────────────────────────
     const mapEl = document.getElementById('zone-map');
@@ -764,6 +823,16 @@ const metaDescription = (property.description?.trim()
     }
 
     .visit-submit:hover { background: var(--havre-bronze-hover); }
+    .visit-submit:disabled { opacity: 0.7; cursor: progress; }
+
+    .visit-feedback {
+        margin: 4px 0 0;
+        font-size: var(--havre-text-small);
+        line-height: var(--havre-leading-body);
+    }
+
+    .visit-feedback.is-success { color: var(--havre-success); }
+    .visit-feedback.is-error   { color: var(--havre-error); }
 
     .visit-call {
         margin-top: 10px;

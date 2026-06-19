@@ -4,6 +4,7 @@ import Header from "../components/Header.astro"
 import Users from "../components/icons/Users.astro"
 import Map from "../components/icons/Map.astro"
 import Home from "../components/icons/Home.astro"
+import Calendar from "../components/icons/Calendar.astro"
 import Logout from "../components/icons/Logout.astro"
 import Edit from "../components/icons/Edit.astro"
 import Trash from "../components/icons/Trash.astro"
@@ -12,6 +13,7 @@ import { getUserById, getUsers } from "../services/users"
 import { getZonesAdmin } from "../services/zones"
 import { getCountries } from "../services/countries"
 import { getProperties } from "../services/properties"
+import { getVisitRequests } from "../services/visitRequests"
 
 const session = await getSession(Astro.cookies)
 if (!session) return Astro.redirect('/login')
@@ -20,7 +22,7 @@ const me = await getUserById(session.sub)
 if (!me) return Astro.redirect('/login')
 
 const isAdmin = session.role === 'admin'
-const [zonesList, propertiesList, countriesList] = await Promise.all([getZonesAdmin(), getProperties(), getCountries()])
+const [zonesList, propertiesList, countriesList, visitRequestsList] = await Promise.all([getZonesAdmin(), getProperties(), getCountries(), getVisitRequests()])
 const usersList = isAdmin ? await getUsers() : []
 const tones = ['olive', 'bronze', 'sage'] as const
 const toneFor = (i: number) => tones[i % tones.length]
@@ -44,6 +46,19 @@ function userStatus(u: { is_active: boolean; last_login_at: Date | string | null
 const propertyStatusLabel: Record<string, string> = {
     draft: 'Borrador', published: 'Publicado', archived: 'Archivado',
 }
+
+const visitStatusLabel: Record<string, string> = {
+    pending: 'Pendiente', contacted: 'Contactado', closed: 'Cerrado',
+}
+const visitStatusOrder = ['pending', 'contacted', 'closed'] as const
+
+const preferredDateLabel: Record<string, string> = {
+    'this-week': 'Esta semana', 'next-week': 'La próxima semana',
+    'this-month': 'Este mes', 'flexible': 'Sin preferencia',
+}
+
+const shortDate = (date: Date | string) =>
+    new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short' }).format(new Date(date))
 ---
 
 <!DOCTYPE html>
@@ -97,6 +112,11 @@ const propertyStatusLabel: Record<string, string> = {
                         <li>
                             <a href="#propiedades">
                                 <Home /> <span>Propiedades</span> <em>{propertiesList.length}</em>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#solicitudes">
+                                <Calendar /> <span>Solicitudes</span> <em>{visitRequestsList.length}</em>
                             </a>
                         </li>
                     </ul>
@@ -258,6 +278,54 @@ const propertyStatusLabel: Record<string, string> = {
                                 <div class="user-actions">
                                     <button type="button" class="icon-btn" data-edit-property={property.id} aria-label={`Editar ${property.title}`}><Edit /></button>
                                     <button type="button" class="icon-btn icon-btn--danger" data-delete-property={property.id} data-title={property.title} aria-label={`Eliminar ${property.title}`}><Trash /></button>
+                                </div>
+                            </li>
+                        )) }
+                    </ul>
+                </section>
+
+                <section class="panel" id="solicitudes" aria-labelledby="visits-heading">
+                    <div class="panel-header">
+                        <div>
+                            <h2 id="visits-heading">Solicitudes de visita</h2>
+                            <p>Las peticiones de visita recibidas desde las fichas de propiedad.</p>
+                        </div>
+                    </div>
+
+                    <ul class="user-list" role="list">
+                        { visitRequestsList.length === 0 && <li class="empty">Aún no hay solicitudes de visita.</li> }
+                        { visitRequestsList.map((req, i) => (
+                            <li class="user-row" data-visit-row={req.id}>
+                                <span class={`avatar avatar--${toneFor(i)}`} aria-hidden="true">{initials(req.name)}</span>
+
+                                <div class="user-identity">
+                                    <p class="user-name">
+                                        {req.name}
+                                        <span class={`badge badge--visit-${req.status}`} data-visit-badge>{visitStatusLabel[req.status]}</span>
+                                    </p>
+                                    <p class="user-email">
+                                        <a href={`/comprar/${req.property_slug}`} target="_blank" rel="noopener">{req.property_title}</a>
+                                    </p>
+                                </div>
+
+                                <div class="user-meta">
+                                    <span class="meta-value">{req.contact}</span>
+                                    <span class="meta-label">contacto</span>
+                                </div>
+
+                                <div class="user-meta">
+                                    <span class="meta-value">{req.preferred_date ? (preferredDateLabel[req.preferred_date] ?? req.preferred_date) : "—"}</span>
+                                    <span class="meta-label">{shortDate(req.created_at)}</span>
+                                </div>
+
+                                <div class="user-actions">
+                                    <label class="sr-only" for={`visit-status-${req.id}`}>Estado de la solicitud de {req.name}</label>
+                                    <select class="visit-status" id={`visit-status-${req.id}`} data-visit-status={req.id}>
+                                        { visitStatusOrder.map(s => (
+                                            <option value={s} selected={s === req.status}>{visitStatusLabel[s]}</option>
+                                        )) }
+                                    </select>
+                                    <button type="button" class="icon-btn icon-btn--danger" data-delete-visit={req.id} data-visit-name={req.name} aria-label={`Eliminar la solicitud de ${req.name}`}><Trash /></button>
                                 </div>
                             </li>
                         )) }
@@ -1378,6 +1446,76 @@ const propertyStatusLabel: Record<string, string> = {
         });
     });
 
+    // ── Visit requests: change status / delete ──
+    const visitsCount = document.querySelector<HTMLElement>('.sidebar-nav a[href="#solicitudes"] em');
+    const visitStatusLabels: Record<string, string> = {
+        pending: 'Pendiente', contacted: 'Contactado', closed: 'Cerrado',
+    };
+
+    document.querySelectorAll<HTMLSelectElement>('[data-visit-status]').forEach(select => {
+        let previous = select.value;
+        select.addEventListener('change', async () => {
+            const id = select.dataset.visitStatus;
+            const status = select.value;
+            if (!id) return;
+
+            select.disabled = true;
+            try {
+                const res = await fetch(`/api/visit-requests/${id}`, {
+                    method:  'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ status }),
+                });
+                if (res.ok) {
+                    previous = status;
+                    const badge = select.closest('.user-row')?.querySelector<HTMLElement>('[data-visit-badge]');
+                    if (badge) {
+                        badge.className = `badge badge--visit-${status}`;
+                        badge.textContent = visitStatusLabels[status] ?? status;
+                    }
+                } else {
+                    select.value = previous;
+                    alert('No se pudo actualizar el estado.');
+                }
+            } catch {
+                select.value = previous;
+                alert('Error de conexión. Inténtalo de nuevo.');
+            } finally {
+                select.disabled = false;
+            }
+        });
+    });
+
+    document.querySelectorAll<HTMLButtonElement>('[data-delete-visit]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id   = btn.dataset.deleteVisit;
+            const name = btn.dataset.visitName ?? 'esta solicitud';
+            if (!id) return;
+
+            const ok = await askConfirm({
+                title:        'Eliminar solicitud',
+                message:      `¿Seguro que quieres eliminar la solicitud de "${name}"? Esta acción no se puede deshacer.`,
+                confirmLabel: 'Eliminar',
+            });
+            if (!ok) return;
+
+            btn.disabled = true;
+            try {
+                const res = await fetch(`/api/visit-requests/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    btn.closest('.user-row')?.remove();
+                    if (visitsCount) visitsCount.textContent = String(Math.max(0, Number(visitsCount.textContent) - 1));
+                    return;
+                }
+                alert('No se pudo eliminar la solicitud.');
+                btn.disabled = false;
+            } catch {
+                alert('Error de conexión. Inténtalo de nuevo.');
+                btn.disabled = false;
+            }
+        });
+    });
+
 </script>
 
 <style>
@@ -1735,6 +1873,42 @@ const propertyStatusLabel: Record<string, string> = {
     .badge--published { background: var(--havre-sage-soft);   color: var(--havre-success);     }
     .badge--draft     { background: var(--havre-bronze-soft); color: var(--havre-bronze-text); }
     .badge--archived  { background: var(--havre-chip-bg);     color: var(--havre-ink-500);     }
+
+    .badge--visit-pending   { background: var(--havre-bronze-soft); color: var(--havre-bronze-text); }
+    .badge--visit-contacted { background: var(--havre-sage-soft);   color: var(--havre-success);     }
+    .badge--visit-closed    { background: var(--havre-chip-bg);     color: var(--havre-ink-500);     }
+
+    .user-email a {
+        color: inherit;
+        text-decoration: none;
+    }
+    .user-email a:hover { text-decoration: underline; }
+
+    .visit-status {
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-700);
+        background: var(--havre-surface);
+        border: 1px solid var(--havre-border-card);
+        border-radius: var(--havre-radius-md);
+        padding: 0 10px;
+        height: 36px;
+        cursor: pointer;
+    }
+    .visit-status:disabled { opacity: 0.6; cursor: progress; }
+
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
 
     /* ─── Modal ──────────────────────────────────────────── */
     .modal {
