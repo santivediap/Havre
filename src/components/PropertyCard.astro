@@ -40,7 +40,7 @@ const parseUrl = (url) => {
 
 <article class="property">
     <a class="property-image" href={`/comprar/${slug}`} aria-label={title}>
-        <Image src={parseUrl(image_url)} alt="Un pájaro." layout='constrained' width={50} height={210} />
+        <Image src={parseUrl(image_url)} alt={`${title}, ${zone}, ${country}`} layout='constrained' width={50} height={210} />
         <span class="property-tag">{tagLabels[tag] ?? "EN VENTA"}</span>
     </a>
 
