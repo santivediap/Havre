@@ -1,5 +1,6 @@
 ---
 import ArrowRight from './icons/ArrowRight.astro'
+import { Image } from 'astro:assets'
 
 interface Props {
     slug:           string
@@ -28,10 +29,18 @@ const specs = [
     `${m_built} m²`,
     ...(terrain_space ? [`${nf.format(Number(terrain_space))} ha`] : []),
 ]
+
+const parseUrl = (url) => {
+    const splitter = "/upload/"
+    const splittedUrl : String[] = url.split(splitter)    
+    splittedUrl.splice(1, 0, "upload/f_webp/w_380/q_50")
+    return splittedUrl.join("/")
+}
 ---
 
 <article class="property">
-    <a class="property-image" href={`/comprar/${slug}`} style={image_url ? `--img: url(${image_url})` : undefined} aria-label={title}>
+    <a class="property-image" href={`/comprar/${slug}`} aria-label={title}>
+        <Image src={parseUrl(image_url)} alt="Un pájaro." layout='constrained' width={50} height={210} />
         <span class="property-tag">{tagLabels[tag] ?? "EN VENTA"}</span>
     </a>
 
@@ -66,7 +75,13 @@ const specs = [
         display: block;
         position: relative;
         height: 210px;
+        overflow: hidden;
         background: var(--img, repeating-linear-gradient(135deg, #E9EDC9 0 14px, #E1E6BC 14px 28px)) center / cover no-repeat;
+
+        & > img {
+            object-fit: cover;
+            width: 100%;
+        }
     }
 
     .property-tag {

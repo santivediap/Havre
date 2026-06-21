@@ -34,6 +34,24 @@ const [zoneList, featured] = await Promise.all([getZones(), getFeaturedPropertie
 		<link rel="icon" href="/favicon.ico" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
+
+		<!-- preload hero image -->
+		<link rel="preload" as="image" fetchpriority="high"
+      	href="https://res.cloudinary.com/dqoqfb8vu/image/upload/w_1070/q_30/v1781375621/hero-bg_oflycq.webp">
+
+	  	<!-- preconnect to images cdn -->
+		<link rel="preconnect" href="https://res.cloudinary.com">
+
+		<!-- connect to domain of font files -->
+		<link rel="preconnect" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap' crossorigin>
+
+		<!-- async CSS (optionally increase loading priority with fetchpriority="high") -->
+		<link rel="preload" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap' onload="this.onload=null;this.rel='stylesheet';this.removeAttribute('as')" as="style">
+
+		<!-- no-JS fallback -->
+		<noscript>
+			<link rel="stylesheet" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap'>
+		</noscript>
 		<title>Astro</title>
 	</head>
 	<body>
@@ -158,7 +176,7 @@ const [zoneList, featured] = await Promise.all([getZones(), getFeaturedPropertie
     background:
       linear-gradient(rgba(46, 42, 32, 0) 0%, rgba(46, 42, 32, 0) 60%, rgba(46, 42, 32, .8) 100%),
       linear-gradient(rgba(110, 122, 78, 0) 0%, rgba(101, 114, 70, .8) 30%, rgba(101, 114, 70, 1) 100%),
-      url(https://res.cloudinary.com/dqoqfb8vu/image/upload/v1781375621/hero-bg_oflycq.webp) center / cover no-repeat;
+      url(https://res.cloudinary.com/dqoqfb8vu/image/upload/w_1070/q_30/v1781375621/hero-bg_oflycq.webp) center / cover no-repeat;
   }
 
   .hero-text-contents {
