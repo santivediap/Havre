@@ -4,6 +4,7 @@ import Search from "../components/icons/Search.astro"
 import Footer from "../components/Footer.astro"
 import ArrowRight from "../components/icons/ArrowRight.astro"
 import PropertyCard from "../components/PropertyCard.astro"
+import SEO from "../components/SEO.astro"
 import { getZones } from "../services/zones"
 import { getFeaturedProperties } from "../services/properties"
 
@@ -27,11 +28,11 @@ const pricesMax = [
 const [zoneList, featured] = await Promise.all([getZones(), getFeaturedProperties()])
 ---
 
-<html lang="en">
+<html lang="es">
 	<head>
 		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
+		<link rel="icon" type="image/svg+xml" href="/havre_logo.svg" />
+		<link rel="icon" href="/havre_logo.ico" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
 
@@ -52,7 +53,10 @@ const [zoneList, featured] = await Promise.all([getZones(), getFeaturedPropertie
 		<noscript>
 			<link rel="stylesheet" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap'>
 		</noscript>
-		<title>Astro</title>
+		<SEO
+			title="Havre · Casas de campo, fincas y refugios rurales en venta"
+			description="Inmobiliaria especializada en el mundo rural: casas de campo, fincas y refugios con alma en venta. Te acompañamos en cada paso, desde la primera visita hasta las llaves."
+		/>
 	</head>
 	<body>
 		<Header />

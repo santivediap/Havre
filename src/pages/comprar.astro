@@ -1,6 +1,7 @@
 ---
 import Header from "../components/Header.astro"
 import Footer from "../components/Footer.astro"
+import SEO from "../components/SEO.astro"
 import "../styles/global.css"
 import "leaflet/dist/leaflet.css"
 import ArrowRight from "../components/icons/ArrowRight.astro"
@@ -121,10 +122,12 @@ const sortOpts = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{pageTitle}</title>
-    <meta name="description" content={pageDescription}>
-    <link rel="canonical" href={canonical}>
-    { noindex && <meta name="robots" content="noindex, follow"> }
+    <SEO
+        title={pageTitle}
+        description={pageDescription}
+        canonical={canonical}
+        noindex={noindex}
+    />
 </head>
 <body>
     <Header/>

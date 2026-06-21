@@ -11,6 +11,7 @@ import Sprout from "../../components/icons/Sprout.astro"
 import Check from "../../components/icons/Check.astro"
 import Location from "../../components/icons/Location.astro"
 import PropertyCard from "../../components/PropertyCard.astro"
+import SEO from "../../components/SEO.astro"
 import { getPropertyBySlug, getSimilarProperties } from "../../services/properties"
 import "../../styles/global.css"
 import "leaflet/dist/leaflet.css"
@@ -65,6 +66,9 @@ const indexable = property.status === 'published'
 const metaDescription = (property.description?.trim()
     || `${property.title} en ${location}. ${property.n_beds} habitaciones, ${property.n_baths} baños y ${property.m_built} m² construidos.`
 ).slice(0, 155)
+
+// Per-property social card: resize the cover to the 1200×630 OG ratio (Cloudinary on-the-fly).
+const ogImage = cover?.url?.replace('/upload/', '/upload/w_1200,h_630,c_fill,q_auto/')
 ---
 
 <!DOCTYPE html>
@@ -72,14 +76,15 @@ const metaDescription = (property.description?.trim()
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    { !indexable && <meta name="robots" content="noindex, nofollow" /> }
-    <title>{property.title} · {location} | Havre</title>
-    <meta name="description" content={metaDescription} />
-    <link rel="canonical" href={`/comprar/${property.slug}`} />
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content={`${property.title} · ${location}`} />
-    <meta property="og:description" content={metaDescription} />
-    { cover && <meta property="og:image" content={cover.url} /> }
+    <SEO
+        title={`${property.title} · ${location} | Havre`}
+        description={metaDescription}
+        canonical={`/comprar/${property.slug}`}
+        image={ogImage}
+        type="article"
+        noindex={!indexable}
+        follow={false}
+    />
 </head>
 <body>
     <Header />

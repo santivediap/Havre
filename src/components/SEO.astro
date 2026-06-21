@@ -1,0 +1,47 @@
+---
+interface Props {
+    title:        string
+    description:  string
+    canonical?:   string   // relative path (e.g. "/comprar?zona=toscana") or absolute; defaults to current path
+    image?:       string
+    type?:        'website' | 'article'
+    noindex?:     boolean
+    follow?:      boolean   // only relevant when noindex; defaults to allowing crawlers to follow links
+}
+
+const {
+    title,
+    description,
+    canonical,
+    image = 'https://res.cloudinary.com/dqoqfb8vu/image/upload/w_1200,h_630,c_fill,q_auto/v1781375621/hero-bg_oflycq.jpg',
+    type = 'website',
+    noindex = false,
+    follow = true,
+} = Astro.props
+
+// Resolve to an absolute URL against `site` from astro.config (handles query strings).
+const canonicalURL = new URL(canonical ?? Astro.url.pathname + Astro.url.search, Astro.site).href
+---
+
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonicalURL} />
+{ noindex && <meta name="robots" content={`noindex, ${follow ? 'follow' : 'nofollow'}`} /> }
+
+<!-- Open Graph -->
+<meta property="og:type" content={type} />
+<meta property="og:site_name" content="Havre" />
+<meta property="og:locale" content="es_ES" />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonicalURL} />
+<meta property="og:image" content={image} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content={title} />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={image} />
