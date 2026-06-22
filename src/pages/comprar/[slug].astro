@@ -15,6 +15,7 @@ import SEO from "../../components/SEO.astro"
 import { getPropertyBySlug, getSimilarProperties } from "../../services/properties"
 import "../../styles/global.css"
 import "leaflet/dist/leaflet.css"
+import { Image } from "astro:assets"
 
 const { slug } = Astro.params
 const property = slug ? await getPropertyBySlug(slug) : null
@@ -59,6 +60,12 @@ const cover     = property.images[0] ?? null
 const thumbs    = property.images.slice(1, 5)
 const totalImgs = property.images.length
 const extraImgs = totalImgs - 5
+
+// Inject a Cloudinary transform after /upload/ (no-op for non-Cloudinary URLs).
+const cl = (url: string, t: string) => url.replace('/upload/', `/upload/${t}/`)
+
+// LCP of the property page: the gallery cover. Preloaded in <head> with this exact URL.
+const coverImg = cover ? cl(cover.url, 'f_auto,q_auto,w_1280') : null
 
 const location = `${property.zone}, ${property.country}`
 const hasCoords = property.latitude != null && property.longitude != null
@@ -136,6 +143,8 @@ const schema = indexable ? {
         follow={false}
     />
 
+    { coverImg && <link rel="preload" as="image" fetchpriority="high" href={coverImg} /> }
+
     <!-- preconnect to images cdn -->
     <link rel="preconnect" href="https://res.cloudinary.com">
 
@@ -168,7 +177,7 @@ const schema = indexable ? {
 
         <article>
             <section class="gallery" aria-label="Galería de imágenes">
-                <figure class="gallery-main" style={cover ? `--img: url(${cover.url})` : undefined}>
+                <figure class="gallery-main" style={coverImg ? `--img: url(${coverImg})` : undefined}>
                     <span class="gallery-tag">{tagLabels[property.tag] ?? "En venta"}</span>
                     { cover?.caption && <figcaption class="gallery-caption">{cover.caption}</figcaption> }
                     { totalImgs > 0 && <span class="gallery-counter">1 / {totalImgs}</span> }
@@ -183,7 +192,7 @@ const schema = indexable ? {
                             <button
                                 type="button"
                                 class="gallery-thumb"
-                                style={`--img: url(${img.url})`}
+                                style={`--img: url(${cl(img.url, 'f_auto,q_auto,w_500')})`}
                                 data-lb-open={i + 1}
                                 aria-label={img.caption ?? `Ver imagen ${i + 2}`}
                             >
@@ -312,7 +321,7 @@ const schema = indexable ? {
                         <footer class="agent">
                             <span class="agent-avatar" aria-hidden="true">
                                 { property.agent_avatar
-                                    ? <img src={property.agent_avatar} alt="" />
+                                    ? <Image src={property.agent_avatar} alt="" width={92} height={92} />
                                     : agentInitials }
                             </span>
                             <div>
@@ -353,7 +362,7 @@ const schema = indexable ? {
                 <button type="button" class="lightbox-nav lightbox-next" data-lb-next aria-label="Foto siguiente"><ArrowRight /></button>
                 <span class="lightbox-counter" id="lb-counter"></span>
             </dialog>
-            <script type="application/json" id="lb-data" set:html={JSON.stringify(property.images.map(i => ({ url: i.url, caption: i.caption })))}></script>
+            <script type="application/json" id="lb-data" set:html={JSON.stringify(property.images.map(i => ({ url: cl(i.url, 'f_auto,q_auto,w_1600'), caption: i.caption })))}></script>
         ) }
     </main>
 
