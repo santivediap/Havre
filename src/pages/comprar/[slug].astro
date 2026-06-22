@@ -69,6 +69,54 @@ const metaDescription = (property.description?.trim()
 
 // Per-property social card: resize the cover to the 1200×630 OG ratio (Cloudinary on-the-fly).
 const ogImage = cover?.url?.replace('/upload/', '/upload/w_1200,h_630,c_fill,q_auto/')
+
+// ── Structured data: breadcrumb (a real rich result) + the property entity ──
+const site = Astro.site!
+const propertyUrl = new URL(`/comprar/${property.slug}`, site).href
+const schema = indexable ? {
+    "@context": "https://schema.org",
+    "@graph": [
+        {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                { "@type": "ListItem", "position": 1, "name": "Inicio",  "item": new URL("/", site).href },
+                { "@type": "ListItem", "position": 2, "name": "Comprar", "item": new URL("/comprar", site).href },
+                { "@type": "ListItem", "position": 3, "name": property.title, "item": propertyUrl },
+            ],
+        },
+        {
+            "@type": ["Product", "SingleFamilyResidence"],
+            "name": property.title,
+            "description": metaDescription,
+            "url": propertyUrl,
+            "image": property.images.map(im => im.url),
+            "numberOfBedrooms": property.n_beds,
+            "numberOfBathroomsTotal": property.n_baths,
+            "floorSize": { "@type": "QuantitativeValue", "value": property.m_built, "unitCode": "MTK" },
+            "address": {
+                "@type": "PostalAddress",
+                "addressLocality": property.zone,
+                "addressCountry": property.country,
+            },
+            ...(hasCoords && {
+                "geo": {
+                    "@type": "GeoCoordinates",
+                    "latitude": Number(property.latitude),
+                    "longitude": Number(property.longitude),
+                },
+            }),
+            "offers": {
+                "@type": "Offer",
+                "price": property.price,
+                "priceCurrency": "EUR",
+                "availability": property.tag === 'sold'
+                    ? "https://schema.org/SoldOut"
+                    : "https://schema.org/InStock",
+                "url": propertyUrl,
+            },
+        },
+    ],
+} : null
 ---
 
 <!DOCTYPE html>
@@ -76,6 +124,8 @@ const ogImage = cover?.url?.replace('/upload/', '/upload/w_1200,h_630,c_fill,q_a
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/havre_logo.svg" />
+	<link rel="icon" href="/havre_logo.ico" />
     <SEO
         title={`${property.title} · ${location} | Havre`}
         description={metaDescription}
@@ -85,6 +135,22 @@ const ogImage = cover?.url?.replace('/upload/', '/upload/w_1200,h_630,c_fill,q_a
         noindex={!indexable}
         follow={false}
     />
+
+    <!-- preconnect to images cdn -->
+    <link rel="preconnect" href="https://res.cloudinary.com">
+
+    <!-- connect to domain of font files -->
+    <link rel="preconnect" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap' crossorigin>
+
+    <!-- async CSS (optionally increase loading priority with fetchpriority="high") -->
+    <link rel="preload" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap' onload="this.onload=null;this.rel='stylesheet';this.removeAttribute('as')" as="style">
+
+    <!-- no-JS fallback -->
+    <noscript>
+        <link rel="stylesheet" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap'>
+    </noscript>
+
+    { schema && <script type="application/ld+json" set:html={JSON.stringify(schema)} is:inline /> }
 </head>
 <body>
     <Header />
