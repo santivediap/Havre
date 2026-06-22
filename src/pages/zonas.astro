@@ -1,6 +1,7 @@
 ---
 import Header from "../components/Header.astro"
 import Footer from "../components/Footer.astro"
+import SEO from "../components/SEO.astro"
 import "../styles/global.css"
 import ArrowRight from "../components/icons/ArrowRight.astro"
 import { getZones } from '../services/zones'
@@ -17,6 +18,23 @@ const stats = [
 
 const formatPrice = (price: number | null) =>
     price ? new Intl.NumberFormat('es-ES').format(price) : '0'
+
+// Inject a Cloudinary transform after /upload/ (no-op for non-Cloudinary URLs).
+const cl = (url: string, t: string) => url.replace('/upload/', `/upload/${t}/`)
+
+// ── Structured data: the list of zones, each → its filtered listing ──
+const site = Astro.site!
+const schema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "Zonas rurales",
+    "itemListElement": zoneList.map((z, i) => ({
+        "@type": "ListItem",
+        "position": i + 1,
+        "url": new URL(`/comprar?zona=${z.slug}`, site).href,
+        "name": `${z.name}, ${z.country}`,
+    })),
+}
 ---
 
 <!DOCTYPE html>
@@ -24,8 +42,28 @@ const formatPrice = (price: number | null) =>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zonas rurales — Toscana, Provenza, Pirineos y más | Havre</title>
-    <meta name="description" content="Explora las regiones rurales donde Havre opera: Toscana, Provenza, Pirineos, Alentejo y Empordà. Más de 340 propiedades en 3 países.">
+    <link rel="icon" type="image/svg+xml" href="/havre_logo.svg" />
+	<link rel="icon" href="/havre_logo.ico" />
+    <SEO
+        title="Zonas rurales — Toscana, Provenza, Pirineos y más | Havre"
+        description="Explora las regiones rurales donde Havre opera: Toscana, Provenza, Pirineos, Alentejo y Empordà. Más de 340 propiedades en 3 países."
+    />
+
+    <!-- preconnect to images cdn -->
+    <link rel="preconnect" href="https://res.cloudinary.com">
+
+    <!-- connect to domain of font files -->
+    <link rel="preconnect" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap' crossorigin>
+
+    <!-- async CSS (optionally increase loading priority with fetchpriority="high") -->
+    <link rel="preload" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap' onload="this.onload=null;this.rel='stylesheet';this.removeAttribute('as')" as="style">
+
+    <!-- no-JS fallback -->
+    <noscript>
+        <link rel="stylesheet" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap'>
+    </noscript>
+
+    <script type="application/ld+json" set:html={JSON.stringify(schema)} is:inline />
 </head>
 <body>
     <Header/>
@@ -53,7 +91,7 @@ const formatPrice = (price: number | null) =>
                 { zoneList.map(zone => (
                     <li>
                         <article class="zone-card">
-                            <a href={`/comprar?zona=${zone.slug}`} class="zone-image" style={zone.image_url ? `--img: url(${zone.image_url})` : undefined}>
+                            <a href={`/comprar?zona=${zone.slug}`} class="zone-image" style={zone.image_url ? `--img: url(${cl(zone.image_url, 'f_auto,q_auto,w_800')})` : undefined}>
                                 <p class="zone-country">{zone.country}</p>
                                 <div class="zone-image-footer">
                                     <h2 class="zone-name">{zone.name}</h2>
