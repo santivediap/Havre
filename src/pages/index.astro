@@ -26,6 +26,43 @@ const pricesMax = [
 ]
 
 const [zoneList, featured] = await Promise.all([getZones(), getFeaturedProperties()])
+
+// ── Structured data (JSON-LD): business entity + website, for Google ──
+const site = Astro.site!
+const schema = {
+    "@context": "https://schema.org",
+    "@graph": [
+        {
+            "@type": "RealEstateAgent",
+            "@id": new URL("#organization", site).href,
+            "name": "Havre",
+            "url": site.href,
+            "logo": new URL("/havre_logo.svg", site).href,
+            "image": "https://res.cloudinary.com/dqoqfb8vu/image/upload/w_1200,h_930,c_fill,q_auto/f_webp/v1782153680/havre-home_fv0lxr.png",
+            "description": "Inmobiliaria especializada en el mundo rural: casas de campo, fincas y refugios con alma en venta.",
+            "areaServed": zoneList.map(z => ({ "@type": "Place", "name": `${z.name}, ${z.country}` })),
+        },
+        {
+            "@type": "WebSite",
+            "@id": new URL("#website", site).href,
+            "url": site.href,
+            "name": "Havre",
+            "inLanguage": "es",
+            "publisher": { "@id": new URL("#organization", site).href },
+        },
+        {
+            // Summary list: points to each property's own page (full detail lives there).
+            "@type": "ItemList",
+            "name": "Propiedades destacadas",
+            "itemListElement": featured.map((p, i) => ({
+                "@type": "ListItem",
+                "position": i + 1,
+                "url": new URL(`/comprar/${p.slug}`, site).href,
+                "name": p.title,
+            })),
+        },
+    ],
+}
 ---
 
 <html lang="es">
@@ -56,7 +93,10 @@ const [zoneList, featured] = await Promise.all([getZones(), getFeaturedPropertie
 		<SEO
 			title="Havre · Casas de campo, fincas y refugios rurales en venta"
 			description="Inmobiliaria especializada en el mundo rural: casas de campo, fincas y refugios con alma en venta. Te acompañamos en cada paso, desde la primera visita hasta las llaves."
+			image="https://res.cloudinary.com/dqoqfb8vu/image/upload/w_1200,h_830,c_fill,q_auto/f_webp/v1782153680/havre-home_fv0lxr.png"
 		/>
+
+		<script type="application/ld+json" set:html={JSON.stringify(schema)} is:inline />
 	</head>
 	<body>
 		<Header />
