@@ -66,9 +66,22 @@ const shortDate = (date: Date | string) =>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/havre_logo.svg" />
+    <link rel="icon" href="/havre_logo.ico" />
     <meta name="robots" content="noindex, nofollow">
     <title>Panel de administración | Havre</title>
     <meta name="description" content="Panel interno de Havre para la gestión de usuarios, zonas y propiedades.">
+
+    <!-- connect to domain of font files -->
+    <link rel="preconnect" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap' crossorigin>
+
+    <!-- async CSS -->
+    <link rel="preload" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap' onload="this.onload=null;this.rel='stylesheet';this.removeAttribute('as')" as="style">
+
+    <!-- no-JS fallback -->
+    <noscript>
+        <link rel="stylesheet" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap'>
+    </noscript>
 </head>
 <body>
 
