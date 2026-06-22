@@ -318,17 +318,17 @@ const schema = indexable ? {
                             ? <a class="visit-call" href={`tel:${property.agent_phone}`}>Llamar al asesor</a>
                             : <button type="button" class="visit-call">Llamar al asesor</button> }
 
-                        <footer class="agent">
+                        <div class="agent">
                             <span class="agent-avatar" aria-hidden="true">
                                 { property.agent_avatar
-                                    ? <Image src={property.agent_avatar} alt="" width={92} height={92} />
+                                    ? <Image src={property.agent_avatar} alt="Agent image" width={92} height={92} />
                                     : agentInitials }
                             </span>
                             <div>
                                 <p class="agent-name">{property.agent_name}</p>
                                 <p class="agent-role">Asesor rural · {property.zone}</p>
                             </div>
-                        </footer>
+                        </div>
                     </div>
 
                     <p class="listing-meta">

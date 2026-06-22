@@ -30,7 +30,7 @@ const specs = [
     ...(terrain_space ? [`${nf.format(Number(terrain_space))} ha`] : []),
 ]
 
-const parseUrl = (url) => {
+const parseUrl = (url) => {    
     const splitter = "/upload/"
     const splittedUrl : String[] = url.split(splitter)    
     splittedUrl.splice(1, 0, "upload/f_webp/w_380/q_50")

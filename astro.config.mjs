@@ -9,10 +9,6 @@ export default defineConfig({
   build: { inlineStylesheets: 'always' },
   output: 'server',
   adapter: cloudflare(),
-  image: {
-    // Authorize Cloudinary so <Image> can optimize remote images from this host.
-    remotePatterns: [{ protocol: 'https', hostname: 'res.cloudinary.com' }],
-  },
   vite: {
     optimizeDeps: {
       exclude: ['bcryptjs'],
