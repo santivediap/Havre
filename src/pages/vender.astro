@@ -1,6 +1,7 @@
 ---
 import Header from "../components/Header.astro"
 import Footer from "../components/Footer.astro"
+import SEO from "../components/SEO.astro"
 import "../styles/global.css"
 
 const steps = [
@@ -22,8 +23,23 @@ const reasons = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vender con Havre — Tu propiedad rural, bien presentada</title>
-    <meta name="description" content="Valoramos tu propiedad rural de forma gratuita y la presentamos a compradores cualificados. Sin compromiso, respuesta en 24 h.">
+    <link rel="icon" type="image/svg+xml" href="/havre_logo.svg" />
+    <link rel="icon" href="/havre_logo.ico" />
+    <SEO
+        title="Vender con Havre — Tu propiedad rural, bien presentada"
+        description="Valoramos tu propiedad rural de forma gratuita y la presentamos a compradores cualificados. Sin compromiso, respuesta en 24 h."
+    />
+
+    <!-- connect to domain of font files -->
+    <link rel="preconnect" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap' crossorigin>
+
+    <!-- async CSS -->
+    <link rel="preload" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap' onload="this.onload=null;this.rel='stylesheet';this.removeAttribute('as')" as="style">
+
+    <!-- no-JS fallback -->
+    <noscript>
+        <link rel="stylesheet" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap'>
+    </noscript>
 </head>
 <body>
     <Header/>
