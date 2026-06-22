@@ -52,6 +52,11 @@ const schema = {
     <!-- preconnect to images cdn -->
     <link rel="preconnect" href="https://res.cloudinary.com">
 
+    <!-- preload the first zone image (the LCP on mobile) with its transformed URL -->
+    { zoneList[0]?.image_url && (
+        <link rel="preload" as="image" fetchpriority="high" href={cl(zoneList[0].image_url, 'f_auto,q_auto,w_800')} />
+    ) }
+
     <!-- connect to domain of font files -->
     <link rel="preconnect" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap' crossorigin>
 
