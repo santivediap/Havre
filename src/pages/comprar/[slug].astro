@@ -64,8 +64,10 @@ const extraImgs = totalImgs - 5
 // Inject a Cloudinary transform after /upload/ (no-op for non-Cloudinary URLs).
 const cl = (url: string, t: string) => url.replace('/upload/', `/upload/${t}/`)
 
-// LCP of the property page: the gallery cover. Preloaded in <head> with this exact URL.
-const coverImg = cover ? cl(cover.url, 'f_auto,q_auto,w_1280') : null
+// LCP of the property page: the gallery cover, served responsively (mobile vs desktop).
+// Preloaded in <head> with these exact URLs, gated by media query to match the CSS background.
+const coverImgSm = cover ? cl(cover.url, 'f_auto,q_auto,w_720') : null
+const coverImgLg = cover ? cl(cover.url, 'f_auto,q_auto,w_1280') : null
 
 const location = `${property.zone}, ${property.country}`
 const hasCoords = property.latitude != null && property.longitude != null
@@ -143,7 +145,12 @@ const schema = indexable ? {
         follow={false}
     />
 
-    { coverImg && <link rel="preload" as="image" fetchpriority="high" href={coverImg} /> }
+    { cover && (
+        <Fragment>
+            <link rel="preload" as="image" fetchpriority="high" href={coverImgSm} media="(max-width: 767.98px)" />
+            <link rel="preload" as="image" fetchpriority="high" href={coverImgLg} media="(min-width: 768px)" />
+        </Fragment>
+    ) }
 
     <!-- preconnect to images cdn -->
     <link rel="preconnect" href="https://res.cloudinary.com">
@@ -177,7 +184,7 @@ const schema = indexable ? {
 
         <article>
             <section class="gallery" aria-label="Galería de imágenes">
-                <figure class="gallery-main" style={coverImg ? `--img: url(${coverImg})` : undefined}>
+                <figure class="gallery-main" style={cover ? `--img-sm: url(${coverImgSm}); --img-lg: url(${coverImgLg})` : undefined}>
                     <span class="gallery-tag">{tagLabels[property.tag] ?? "En venta"}</span>
                     { cover?.caption && <figcaption class="gallery-caption">{cover.caption}</figcaption> }
                     { totalImgs > 0 && <span class="gallery-counter">1 / {totalImgs}</span> }
@@ -590,7 +597,15 @@ const schema = indexable ? {
         overflow: hidden;
         background:
             linear-gradient(rgba(46, 42, 32, 0) 55%, rgba(46, 42, 32, 0.55) 100%),
-            var(--img, repeating-linear-gradient(135deg, #E9EDC9 0 14px, #E1E6BC 14px 28px)) center / cover no-repeat;
+            var(--img-sm, repeating-linear-gradient(135deg, #E9EDC9 0 14px, #E1E6BC 14px 28px)) center / cover no-repeat;
+    }
+
+    @media (min-width: 768px) {
+        .gallery-main {
+            background-image:
+                linear-gradient(rgba(46, 42, 32, 0) 55%, rgba(46, 42, 32, 0.55) 100%),
+                var(--img-lg, repeating-linear-gradient(135deg, #E9EDC9 0 14px, #E1E6BC 14px 28px));
+        }
     }
 
     .gallery-tag {
