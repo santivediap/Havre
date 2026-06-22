@@ -1,6 +1,7 @@
 ---
 import Header from "../components/Header.astro"
 import Footer from "../components/Footer.astro"
+import SEO from "../components/SEO.astro"
 import Location from "../components/icons/Location.astro"
 import Lifeline from "../components/icons/Lifeline.astro"
 import Heart from "../components/icons/Heart.astro"
@@ -9,6 +10,9 @@ import { getCountries } from "../services/countries"
 import "../styles/global.css"
 
 const countriesList = await getCountries()
+
+// Inject a Cloudinary transform after /upload/ (no-op for non-Cloudinary URLs).
+const cl = (url: string, t: string) => url.replace('/upload/', `/upload/${t}/`)
 
 const companyMetrics = [
     { value: "2019", label: "Año en que empezamos" },
@@ -32,19 +36,39 @@ const team = [
 ---
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <link rel="icon" type="image/svg+xml" href="/havre_logo.svg" />
+    <link rel="icon" href="/havre_logo.ico" />
+    <SEO
+        title="Sobre Havre — Quiénes somos y por qué solo lo rural | Havre"
+        description="Conoce a Havre: desde 2019 acompañamos la compraventa de casas de campo, fincas y refugios rurales en Europa. Menos casas, mejor contadas."
+        image="https://res.cloudinary.com/dqoqfb8vu/image/upload/w_1200,h_830,c_fill,q_auto/f_webp/v1782169782/about-us_hag3n5.png"
+    />
+
+    <!-- preconnect to images cdn -->
+    <link rel="preconnect" href="https://res.cloudinary.com">
+
+    <!-- connect to domain of font files -->
+    <link rel="preconnect" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap' crossorigin>
+
+    <!-- async CSS -->
+    <link rel="preload" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap' onload="this.onload=null;this.rel='stylesheet';this.removeAttribute('as')" as="style">
+
+    <!-- no-JS fallback -->
+    <noscript>
+        <link rel="stylesheet" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap'>
+    </noscript>
 </head>
 <body>
     <Header/>
 
     <main>
         <section class="hero">
-            <h1 class="hero-main-title">SOBRE HAVRE</h2>
-            <h2 class="hero-title">
+            <p class="hero-main-title">SOBRE HAVRE</p>
+            <h1 class="hero-title">
                 Un <span>havre</span> es un refugio. Ayudamos a encontrar el tuyo en el campo.
             </h1>
 
@@ -55,7 +79,7 @@ const team = [
         </section>
 
         <section class="our-history">
-            <h1>NUESTRA HISTORIA</h1>
+            <p>NUESTRA HISTORIA</p>
             <aside>
                 <h2>Empezó con una casa de piedra que nadie sabía vender</h2>
                 <p>En 2019, buscando una masía abandonada entre olivos, nos topamos con el mismo problema una y otra vez: los grandes portales trataban una casa con doscientos años de historia igual que un estudio en la ciudad. Fotos frías, descripciones de plantilla, y agentes que nunca habían pisado el camino de tierra.</p>
@@ -65,13 +89,13 @@ const team = [
         </section>
 
         <section class="company-info">
-            <h1>Lo que nos guía</h1>
+            <h2>Lo que nos guía</h2>
 
             <div class="cards">
                 { companyInfo.map(item => (
                     <article>
                         <item.icon />
-                        <h2>{item.title}</h2>
+                        <h3>{item.title}</h3>
                         <p>{item.description}</p>
                     </article>
                 )) }
@@ -88,11 +112,11 @@ const team = [
         </section>
 
         <section class="team">
-            <h1>EL EQUIPO</h1>
+            <p>EL EQUIPO</p>
             <h2>Gente que conoce el camino de tierra</h2>
             { team.map(member => (
                 <article class="partner">
-                    <div class="image" style={`--img: url(${member.img})`}></div>
+                    <div class="image" style={`--img: url(${cl(member.img, 'f_auto,q_auto,w_500')})`}></div>
                     <h3>{member.name}</h3>
                     <h4>{member.role} · {member.zone}</h4>
                     <p>{member.bio}</p>
@@ -101,18 +125,18 @@ const team = [
         </section>
 
         <article class="slogan">
-            <p>“No vendemos propiedades. Acompañamos a las personas hasta el lugar donde querrán quedarse.”</p>
-            <h1>LA PROMESA HAVRE</h1>
+            <p class="slogan-quote">“No vendemos propiedades. Acompañamos a las personas hasta el lugar donde querrán quedarse.”</p>
+            <p class="slogan-eyebrow">LA PROMESA HAVRE</p>
         </article>
 
         <section class="cta-nav">
-            <a href="comprar">
+            <a href="/comprar">
                 <h2>Explorar propiedades</h2>
                 <p>Más de 340 casas de campo, fincas y refugios esperándote.</p>
                 <span>Ver el catálogo <ArrowRight/></span>
             </a>
 
-            <a href="vender">
+            <a href="/vender">
                 <h2>Vender con nosotros</h2>
                 <p>Valoración gratuita y acompañamiento de principio a fin.</p>
                 <span>Empezar <ArrowRight/></span>
@@ -175,7 +199,7 @@ const team = [
         border-top: 1px solid var(--havre-line);
     }
 
-    .our-history h1 {
+    .our-history > p {
         font-family: var(--havre-font-sans);
         font-size: var(--havre-text-small);
         font-weight: var(--havre-weight-semibold);
@@ -210,7 +234,7 @@ const team = [
         border-top: 1px solid var(--havre-line);
     }
 
-    .company-info > h1 {
+    .company-info > h2 {
         font-family: var(--havre-font-serif);
         font-size: var(--havre-text-h2);
         font-weight: var(--havre-weight-bold);
@@ -232,7 +256,7 @@ const team = [
         padding: 32px;
         box-shadow: var(--havre-shadow-xs);
 
-        h2 {
+        h3 {
             font-family: var(--havre-font-serif);
             font-size: var(--havre-text-h3);
             font-weight: var(--havre-weight-semibold);
@@ -297,7 +321,7 @@ const team = [
         background:
             linear-gradient(rgba(46, 42, 32, 0) 0%, rgba(46, 42, 32, 0) 60%, rgba(46, 42, 32, .8) 100%),
             linear-gradient(rgba(110, 122, 78, 0) 0%, rgba(101, 114, 70, .2) 30%, rgba(101, 114, 70, 1) 100%),
-            url(https://res.cloudinary.com/dqoqfb8vu/image/upload/v1781375621/team-bg_tlcfku.webp) center / cover no-repeat;
+            url(https://res.cloudinary.com/dqoqfb8vu/image/upload/f_auto,q_auto,w_1280/v1781375621/team-bg_tlcfku.webp) center / cover no-repeat;
         border-radius: var(--havre-radius-2xl);
         position: relative;
         overflow: hidden;
@@ -321,7 +345,7 @@ const team = [
         border-top: 1px solid var(--havre-line);
     }
 
-    .team > h1 {
+    .team > p {
         grid-column: 1 / -1;
         font-family: var(--havre-font-sans);
         font-size: var(--havre-text-small);
@@ -383,7 +407,7 @@ const team = [
         margin: 0 0 70px;
     }
 
-    .slogan > p {
+    .slogan-quote {
         font-family: var(--havre-font-serif);
         font-size: var(--havre-text-h2);
         font-style: italic;
@@ -396,7 +420,7 @@ const team = [
         margin-right: auto;
     }
 
-    .slogan > h1 {
+    .slogan-eyebrow {
         font-family: var(--havre-font-sans);
         font-size: var(--havre-text-small);
         font-weight: var(--havre-weight-semibold);
@@ -465,7 +489,7 @@ const team = [
             gap: 20px;
             padding: 48px 0;
         }
-        .our-history h1  { margin: 0; }
+        .our-history > p  { margin: 0; }
         .our-history aside h2 { font-size: var(--havre-text-h3); }
         .our-history aside p  { font-size: var(--havre-text-body); }
 
@@ -489,7 +513,7 @@ const team = [
         }
 
         .slogan { padding: 48px 28px; margin-bottom: 40px; }
-        .slogan > p { font-size: var(--havre-text-h3); }
+        .slogan-quote { font-size: var(--havre-text-h3); }
 
         .cta-nav { grid-template-columns: 1fr; }
     }
@@ -509,7 +533,7 @@ const team = [
         .team { column-gap: 16px; }
 
         .slogan { padding: 36px 20px; }
-        .slogan > p { font-size: var(--havre-text-subtitle); }
+        .slogan-quote { font-size: var(--havre-text-subtitle); }
 
         .cta-nav > a { padding: 28px 24px; }
     }
