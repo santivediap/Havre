@@ -1,5 +1,5 @@
 import { db, valuationRequests } from '../db';
-import { desc } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 
 export interface NewValuationRequest {
     address:       string;
@@ -16,4 +16,14 @@ export async function createValuationRequest(data: NewValuationRequest) {
 
 export async function getValuationRequests() {
     return db.select().from(valuationRequests).orderBy(desc(valuationRequests.created_at));
+}
+
+export async function updateValuationRequest(id: number, data: Record<string, unknown>) {
+    const [row] = await db.update(valuationRequests).set(data).where(eq(valuationRequests.id, id)).returning();
+    return row;
+}
+
+export async function deleteValuationRequest(id: number) {
+    const [row] = await db.delete(valuationRequests).where(eq(valuationRequests.id, id)).returning();
+    return row;
 }

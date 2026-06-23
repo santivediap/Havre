@@ -14,6 +14,7 @@ import { getZonesAdmin } from "../services/zones"
 import { getCountries } from "../services/countries"
 import { getProperties } from "../services/properties"
 import { getVisitRequests } from "../services/visitRequests"
+import { getValuationRequests } from "../services/valuationRequests"
 
 const session = await getSession(Astro.cookies)
 if (!session) return Astro.redirect('/login')
@@ -22,7 +23,7 @@ const me = await getUserById(session.sub)
 if (!me) return Astro.redirect('/login')
 
 const isAdmin = session.role === 'admin'
-const [zonesList, propertiesList, countriesList, visitRequestsList] = await Promise.all([getZonesAdmin(), getProperties(), getCountries(), getVisitRequests()])
+const [zonesList, propertiesList, countriesList, visitRequestsList, valuationsList] = await Promise.all([getZonesAdmin(), getProperties(), getCountries(), getVisitRequests(), getValuationRequests()])
 const usersList = isAdmin ? await getUsers() : []
 const tones = ['olive', 'bronze', 'sage'] as const
 const toneFor = (i: number) => tones[i % tones.length]
@@ -51,6 +52,10 @@ const visitStatusLabel: Record<string, string> = {
     pending: 'Pendiente', contacted: 'Contactado', closed: 'Cerrado',
 }
 const visitStatusOrder = ['pending', 'contacted', 'closed'] as const
+
+const valuationTypeLabel: Record<string, string> = {
+    'country-house': 'Casa de campo', farmhouse: 'Masía / Cortijo', property: 'Finca con terreno',
+}
 
 const preferredDateLabel: Record<string, string> = {
     'this-week': 'Esta semana', 'next-week': 'La próxima semana',
@@ -130,6 +135,11 @@ const shortDate = (date: Date | string) =>
                         <li>
                             <a href="#solicitudes">
                                 <Calendar /> <span>Solicitudes</span> <em>{visitRequestsList.length}</em>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#valoraciones">
+                                <Calendar /> <span>Valoraciones</span> <em>{valuationsList.length}</em>
                             </a>
                         </li>
                     </ul>
@@ -339,6 +349,52 @@ const shortDate = (date: Date | string) =>
                                         )) }
                                     </select>
                                     <button type="button" class="icon-btn icon-btn--danger" data-delete-visit={req.id} data-visit-name={req.name} aria-label={`Eliminar la solicitud de ${req.name}`}><Trash /></button>
+                                </div>
+                            </li>
+                        )) }
+                    </ul>
+                </section>
+
+                <section class="panel" id="valoraciones" aria-labelledby="valuations-heading">
+                    <div class="panel-header">
+                        <div>
+                            <h2 id="valuations-heading">Solicitudes de valoración</h2>
+                            <p>Las peticiones de valoración recibidas desde la página de vender.</p>
+                        </div>
+                    </div>
+
+                    <ul class="user-list" role="list">
+                        { valuationsList.length === 0 && <li class="empty">Aún no hay solicitudes de valoración.</li> }
+                        { valuationsList.map((req, i) => (
+                            <li class="user-row" data-valuation-row={req.id}>
+                                <span class={`avatar avatar--${toneFor(i)}`} aria-hidden="true">{initials(req.name)}</span>
+
+                                <div class="user-identity">
+                                    <p class="user-name">
+                                        {req.name}
+                                        <span class={`badge badge--visit-${req.status}`} data-valuation-badge>{visitStatusLabel[req.status]}</span>
+                                    </p>
+                                    <p class="user-email">{req.address}{req.property_type ? ` · ${valuationTypeLabel[req.property_type] ?? req.property_type}` : ''}</p>
+                                </div>
+
+                                <div class="user-meta">
+                                    <span class="meta-value">{req.email}</span>
+                                    <span class="meta-label">contacto</span>
+                                </div>
+
+                                <div class="user-meta">
+                                    <span class="meta-value">{req.surface ? `${req.surface} m²` : "—"}</span>
+                                    <span class="meta-label">{shortDate(req.created_at)}</span>
+                                </div>
+
+                                <div class="user-actions">
+                                    <label class="sr-only" for={`valuation-status-${req.id}`}>Estado de la solicitud de {req.name}</label>
+                                    <select class="visit-status" id={`valuation-status-${req.id}`} data-valuation-status={req.id}>
+                                        { visitStatusOrder.map(s => (
+                                            <option value={s} selected={s === req.status}>{visitStatusLabel[s]}</option>
+                                        )) }
+                                    </select>
+                                    <button type="button" class="icon-btn icon-btn--danger" data-delete-valuation={req.id} data-valuation-name={req.name} aria-label={`Eliminar la solicitud de ${req.name}`}><Trash /></button>
                                 </div>
                             </li>
                         )) }
@@ -1518,6 +1574,73 @@ const shortDate = (date: Date | string) =>
                 if (res.ok) {
                     btn.closest('.user-row')?.remove();
                     if (visitsCount) visitsCount.textContent = String(Math.max(0, Number(visitsCount.textContent) - 1));
+                    return;
+                }
+                alert('No se pudo eliminar la solicitud.');
+                btn.disabled = false;
+            } catch {
+                alert('Error de conexión. Inténtalo de nuevo.');
+                btn.disabled = false;
+            }
+        });
+    });
+
+    // ── Valuation requests: change status / delete ──
+    const valuationsCount = document.querySelector<HTMLElement>('.sidebar-nav a[href="#valoraciones"] em');
+
+    document.querySelectorAll<HTMLSelectElement>('[data-valuation-status]').forEach(select => {
+        let previous = select.value;
+        select.addEventListener('change', async () => {
+            const id = select.dataset.valuationStatus;
+            const status = select.value;
+            if (!id) return;
+
+            select.disabled = true;
+            try {
+                const res = await fetch(`/api/valuations/${id}`, {
+                    method:  'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ status }),
+                });
+                if (res.ok) {
+                    previous = status;
+                    const badge = select.closest('.user-row')?.querySelector<HTMLElement>('[data-valuation-badge]');
+                    if (badge) {
+                        badge.className = `badge badge--visit-${status}`;
+                        badge.textContent = visitStatusLabels[status] ?? status;
+                    }
+                } else {
+                    select.value = previous;
+                    alert('No se pudo actualizar el estado.');
+                }
+            } catch {
+                select.value = previous;
+                alert('Error de conexión. Inténtalo de nuevo.');
+            } finally {
+                select.disabled = false;
+            }
+        });
+    });
+
+    document.querySelectorAll<HTMLButtonElement>('[data-delete-valuation]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id   = btn.dataset.deleteValuation;
+            const name = btn.dataset.valuationName ?? 'esta solicitud';
+            if (!id) return;
+
+            const ok = await askConfirm({
+                title:        'Eliminar solicitud',
+                message:      `¿Seguro que quieres eliminar la solicitud de "${name}"? Esta acción no se puede deshacer.`,
+                confirmLabel: 'Eliminar',
+            });
+            if (!ok) return;
+
+            btn.disabled = true;
+            try {
+                const res = await fetch(`/api/valuations/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    btn.closest('.user-row')?.remove();
+                    if (valuationsCount) valuationsCount.textContent = String(Math.max(0, Number(valuationsCount.textContent) - 1));
                     return;
                 }
                 alert('No se pudo eliminar la solicitud.');
