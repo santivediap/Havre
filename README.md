@@ -13,7 +13,7 @@ A full-stack rural real-estate web app — browse country houses, farms and rura
 The public site is live at the link above. The screencast below shows the **gated admin dashboard** — where the team manages properties, zones and users, and triages visit & valuation requests:
 
 <p align="center">
-  <img src="https://res.cloudinary.com/dqoqfb8vu/image/upload/v1782229371/admin_view_aj9azc.gif" alt="Havre admin dashboard — managing properties, zones, users and requests" width="100%">
+  <video src="https://github.com/user-attachments/assets/f8f86c54-c892-4a61-83a2-c18626803532" controls muted loop width="100%"></video>
 </p>
 
 ---
