@@ -144,6 +144,14 @@ export async function getProperties() {
         .orderBy(desc(properties.created_at));
 }
 
+// Lean query for the sitemap: just slug + updated_at of published properties.
+export async function getPublishedForSitemap() {
+    return db
+        .select({ slug: properties.slug, updated_at: properties.updated_at })
+        .from(properties)
+        .where(eq(properties.status, 'published'));
+}
+
 // A single property by its slug, with zone, country and ordered images,
 // for the public detail page.
 export async function getPropertyBySlug(slug: string) {
