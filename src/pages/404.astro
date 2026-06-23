@@ -1,0 +1,131 @@
+---
+import Header from "../components/Header.astro"
+import Footer from "../components/Footer.astro"
+import ArrowRight from "../components/icons/ArrowRight.astro"
+import "../styles/global.css"
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/havre_logo.svg" />
+    <link rel="icon" href="/havre_logo.ico" />
+    <meta name="robots" content="noindex">
+    <title>Página no encontrada | Havre</title>
+    <meta name="description" content="La página que buscas no existe o se ha movido.">
+
+    <!-- connect to domain of font files -->
+    <link rel="preconnect" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap' crossorigin>
+
+    <!-- async CSS -->
+    <link rel="preload" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap' onload="this.onload=null;this.rel='stylesheet';this.removeAttribute('as')" as="style">
+
+    <!-- no-JS fallback -->
+    <noscript>
+        <link rel="stylesheet" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap'>
+    </noscript>
+</head>
+<body>
+    <Header/>
+
+    <main class="notfound">
+        <p class="eyebrow">ERROR 404</p>
+        <h1>Esta página se perdió entre los campos.</h1>
+        <p class="lead">La dirección que buscas no existe o ha cambiado de sitio. Pero hay muchos refugios esperándote.</p>
+
+        <div class="actions">
+            <a class="btn btn--bronze" href="/">Volver al inicio</a>
+            <a class="btn btn--ghost" href="/comprar">Ver propiedades <ArrowRight/></a>
+        </div>
+    </main>
+
+    <Footer/>
+</body>
+</html>
+
+<style>
+    .notfound {
+        max-width: calc(var(--max-width) + 80px);
+        margin: 0 auto;
+        padding: 120px calc(var(--havre-space-5) * 4);
+        min-height: 56vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .eyebrow {
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        letter-spacing: var(--havre-tracking-eyebrow);
+        color: var(--havre-link);
+        margin: 0 0 20px;
+    }
+
+    .notfound h1 {
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-display);
+        font-weight: var(--havre-weight-semibold);
+        line-height: var(--havre-leading-heading);
+        color: var(--havre-ink-900);
+        margin: 0 0 20px;
+        max-width: 640px;
+    }
+
+    .lead {
+        font-size: var(--havre-text-subtitle);
+        color: var(--havre-ink-700);
+        line-height: var(--havre-leading-body);
+        max-width: 480px;
+        margin: 0 0 40px;
+    }
+
+    .actions {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-body);
+        font-weight: var(--havre-weight-semibold);
+        border-radius: var(--havre-radius-lg);
+        padding: 15px 28px;
+        transition: all ease-in 0.15s;
+    }
+
+    .btn--bronze {
+        background-color: var(--havre-bronze-default);
+        color: var(--havre-white);
+
+        &:hover { background-color: var(--havre-bronze-hover); }
+    }
+
+    .btn--ghost {
+        color: var(--havre-bronze-text);
+        border: 1px solid var(--havre-border-card);
+
+        &:hover { background-color: var(--havre-white); transform: translateY(-2px); }
+    }
+
+    @media (max-width: 749px) {
+        .notfound { padding: 72px 20px; min-height: 48vh; }
+        .notfound h1 { font-size: var(--havre-text-h1); }
+    }
+
+    @media (max-width: 480px) {
+        .notfound h1 { font-size: var(--havre-text-h2); }
+        .actions { flex-direction: column; align-self: stretch; }
+        .btn { justify-content: center; }
+    }
+</style>
