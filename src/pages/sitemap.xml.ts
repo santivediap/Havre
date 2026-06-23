@@ -21,7 +21,8 @@ export const GET: APIRoute = async ({ site }) => {
     // Static + zone pages have no reliable per-URL modified date → no <lastmod>.
     // Property pages use their updated_at so Google knows when a listing changed.
     const entries: Entry[] = [
-        ...['/', '/comprar', '/zonas', '/vender', '/about-us'].map(loc => ({ loc })),
+        ...['/', '/comprar', '/zonas', '/vender', '/about-us',
+            '/contacto', '/aviso-legal', '/privacidad', '/cookies'].map(loc => ({ loc })),
         ...zoneList.map(z => ({ loc: `/comprar?zona=${z.slug}` })),
         ...propertyList.map(p => ({ loc: `/comprar/${p.slug}`, lastmod: isoDay(p.updated_at) })),
     ]

@@ -1,0 +1,126 @@
+---
+import Header from "../components/Header.astro"
+import Footer from "../components/Footer.astro"
+import SEO from "../components/SEO.astro"
+import Disclaimer from "../components/Disclaimer.astro"
+import "../styles/global.css"
+
+interface Props {
+    title:        string
+    description:  string
+    heading:      string
+    updated?:     string
+}
+
+const { title, description, heading, updated } = Astro.props
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/havre_logo.svg" />
+    <link rel="icon" href="/havre_logo.ico" />
+    <SEO title={title} description={description} />
+
+    <!-- connect to domain of font files -->
+    <link rel="preconnect" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap' crossorigin>
+
+    <!-- async CSS -->
+    <link rel="preload" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap' onload="this.onload=null;this.rel='stylesheet';this.removeAttribute('as')" as="style">
+
+    <!-- no-JS fallback -->
+    <noscript>
+        <link rel="stylesheet" href='https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap'>
+    </noscript>
+</head>
+<body>
+    <Header/>
+
+    <main class="legal">
+        <p class="eyebrow">HAVRE</p>
+        <h1>{heading}</h1>
+        { updated && <p class="updated">Última actualización: {updated}</p> }
+
+        <Disclaimer />
+
+        <div class="prose">
+            <slot />
+        </div>
+    </main>
+
+    <Footer/>
+</body>
+</html>
+
+<style>
+    .legal {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 72px calc(var(--havre-space-5) * 4) 96px;
+    }
+
+    .eyebrow {
+        font-family: var(--havre-font-sans);
+        font-size: var(--havre-text-small);
+        font-weight: var(--havre-weight-semibold);
+        letter-spacing: var(--havre-tracking-eyebrow);
+        color: var(--havre-link);
+        margin: 0 0 16px;
+    }
+
+    .legal h1 {
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-h1);
+        font-weight: var(--havre-weight-semibold);
+        line-height: var(--havre-leading-heading);
+        color: var(--havre-ink-900);
+        margin: 0 0 8px;
+    }
+
+    .updated {
+        font-size: var(--havre-text-small);
+        color: var(--havre-ink-500);
+        margin: 0 0 32px;
+    }
+
+    /* Slotted page content (comes from the child, so styled with :global). */
+    .prose :global(h2) {
+        font-family: var(--havre-font-serif);
+        font-size: var(--havre-text-h3);
+        font-weight: var(--havre-weight-semibold);
+        color: var(--havre-ink-900);
+        margin: 36px 0 14px;
+    }
+
+    .prose :global(p) {
+        font-size: var(--havre-text-body);
+        color: var(--havre-ink-700);
+        line-height: var(--havre-leading-body);
+        margin: 0 0 16px;
+    }
+
+    .prose :global(ul) {
+        margin: 0 0 16px;
+        padding-left: 22px;
+    }
+
+    .prose :global(li) {
+        font-size: var(--havre-text-body);
+        color: var(--havre-ink-700);
+        line-height: var(--havre-leading-body);
+        margin: 0 0 8px;
+    }
+
+    .prose :global(a) {
+        color: var(--havre-bronze-text);
+        font-weight: var(--havre-weight-semibold);
+        text-decoration: underline;
+    }
+
+    @media (max-width: 749px) {
+        .legal { padding: 48px 20px 64px; }
+        .legal h1 { font-size: var(--havre-text-h2); }
+    }
+</style>
