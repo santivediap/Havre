@@ -13,7 +13,7 @@ A full-stack rural real-estate web app — browse country houses, farms and rura
 The public site is live at the link above. The screencast below shows the **gated admin dashboard** — where the team manages properties, zones and users, and triages visit & valuation requests:
 
 <p align="center">
-  <video src="https://github.com/user-attachments/assets/f8f86c54-c892-4a61-83a2-c18626803532" controls muted loop width="100%"></video>
+  <video src="https://github.com/user-attachments/assets/f8f86c54-c892-4a61-83a2-c18626803532" controls loop width="100%"></video>
 </p>
 
 ---
