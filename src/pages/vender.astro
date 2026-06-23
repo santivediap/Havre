@@ -71,7 +71,7 @@ const reasons = [
                 <h2>Valoración gratuita</h2>
                 <p class="card-subtitle">Sin compromiso · respuesta en 24 h</p>
 
-                <form action="" method="post" novalidate>
+                <form id="valuation-form" action="/api/valuations" method="post" novalidate>
                     <div class="field field--full">
                         <label for="address">Dirección de la propiedad</label>
                         <input id="address" type="text" name="address" placeholder="Localidad, región" autocomplete="street-address" required>
@@ -104,6 +104,7 @@ const reasons = [
                     </div>
 
                     <button type="submit" class="submit-btn">Solicitar valoración gratuita</button>
+                    <p class="form-feedback" id="valuation-feedback" role="status" aria-live="polite" hidden></p>
                 </form>
 
                 <p class="form-legal">Al enviar aceptas que un asesor de Havre te contacte. Sin compromiso.</p>
@@ -150,6 +151,57 @@ const reasons = [
     <Footer/>
 </body>
 </html>
+
+<script>
+    const form = document.getElementById('valuation-form') as HTMLFormElement | null;
+    const feedback = document.getElementById('valuation-feedback');
+    const submitBtn = form?.querySelector<HTMLButtonElement>('button[type="submit"]') ?? null;
+
+    function show(message: string, ok: boolean) {
+        if (!feedback) return;
+        feedback.textContent = message;
+        feedback.dataset.ok = String(ok);
+        feedback.hidden = false;
+    }
+
+    form?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fd = new FormData(form);
+        const payload = {
+            address: String(fd.get('address') ?? '').trim(),
+            type:    fd.get('type'),
+            surface: fd.get('surface'),
+            name:    String(fd.get('name') ?? '').trim(),
+            email:   String(fd.get('email') ?? '').trim(),
+        };
+
+        if (!payload.address || !payload.name || !payload.email) {
+            show('Completa la dirección, tu nombre y un correo.', false);
+            return;
+        }
+
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Enviando…'; }
+
+        try {
+            const res = await fetch('/api/valuations', {
+                method:  'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body:    JSON.stringify(payload),
+            });
+            if (res.ok) {
+                form.reset();
+                show('¡Gracias! Un asesor te enviará una primera estimación en 24 h.', true);
+            } else {
+                const data: any = await res.json().catch(() => null);
+                show(data?.error ?? 'No se pudo enviar. Inténtalo de nuevo.', false);
+            }
+        } catch {
+            show('No se pudo enviar. Revisa tu conexión.', false);
+        } finally {
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Solicitar valoración gratuita'; }
+        }
+    });
+</script>
 
 <style>
     main {
@@ -303,6 +355,17 @@ const reasons = [
         text-align: center;
         margin: 15px 0 0;
     }
+
+    .form-feedback {
+        font-size: var(--havre-text-small);
+        line-height: var(--havre-leading-body);
+        text-align: center;
+        margin: 14px 0 0;
+        color: var(--havre-ink-700);
+    }
+
+    .form-feedback[data-ok="true"]  { color: #2f7d4f; }
+    .form-feedback[data-ok="false"] { color: #b3261e; }
 
     .process {
         padding: 90px 0;

@@ -7,6 +7,7 @@ const PUBLIC_API = new Set([
     'POST /api/login',
     'POST /api/logout',
     'POST /api/visit-requests',
+    'POST /api/valuations',
 ]);
 
 const unauthorized = (error: string, status: number) =>
